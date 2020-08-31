@@ -8,8 +8,8 @@ on:
 
 jobs:
 
-  build:
-    name: Build
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     steps:
 
