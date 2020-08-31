@@ -24,3 +24,10 @@ Then run
 docker stack deploy --compose-file docker-compose.yml kademlia
 ```
 
+### Testing
+
+Tests can be run by running
+
+```bash
+go test ./test/...
+```
