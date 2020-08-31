@@ -22,4 +22,7 @@ func (kademlia *Kademlia) Store(data []byte) {
 
 func main() {
 	fmt.Println("Not yet implemented...")
+	for {
+		// For now loop forever so the node does not stop
+	}
 }
