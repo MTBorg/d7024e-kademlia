@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	. "kademlia/internal/contact"
+	"os"
+	"time"
 )
 
 type Kademlia struct {
@@ -22,6 +26,10 @@ func (kademlia *Kademlia) Store(data []byte) {
 
 func main() {
 	fmt.Println("Not yet implemented...")
+
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+	log.Info().Msg("Starting node...")
+
 	for {
 		// For now loop forever so the node does not stop
 	}
