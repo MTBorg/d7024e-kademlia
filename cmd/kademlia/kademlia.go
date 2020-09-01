@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"kademlia/internal/cmdlistener"
 	. "kademlia/internal/contact"
 	"os"
 	"time"
@@ -25,12 +25,8 @@ func (kademlia *Kademlia) Store(data []byte) {
 }
 
 func main() {
-	fmt.Println("Not yet implemented...")
-
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 	log.Info().Msg("Starting node...")
 
-	for {
-		// For now loop forever so the node does not stop
-	}
+	cmdlistener.Listen()
 }
