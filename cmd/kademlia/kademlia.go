@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"kademlia/internal/cmdlistener"
+	"kademlia/internal/command/listener"
 	. "kademlia/internal/contact"
 	"os"
 	"time"
