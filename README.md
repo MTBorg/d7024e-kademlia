@@ -24,6 +24,14 @@ Then run
 docker stack deploy --compose-file docker-compose.yml kademlia
 ```
 
+### Executing commands
+
+Any node can told to execute any command by running the following
+
+```
+docker exec -ti <container-name/id> kademliactl <command>
+```
+
 ### Testing
 
 Tests can be run by running
