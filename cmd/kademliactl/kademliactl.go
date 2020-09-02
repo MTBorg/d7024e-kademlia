@@ -16,10 +16,11 @@ func reader(wg *sync.WaitGroup, r io.Reader) {
 
 	//TODO: Don't hardcode buffer size to 1024 bytes
 	buf := make([]byte, 1024)
-	_, err := r.Read(buf[:])
+	n, err := r.Read(buf[:])
 	if err != nil {
 		return
 	}
+	log.Info().Str("Response", string(buf[:n])).Msg("Received response")
 }
 
 func readCmdLineArgs() []byte {

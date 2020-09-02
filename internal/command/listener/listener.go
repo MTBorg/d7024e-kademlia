@@ -2,6 +2,7 @@ package cmdlistener
 
 import (
 	"github.com/rs/zerolog/log"
+	"kademlia/internal/command/parser"
 	"net"
 )
 
@@ -15,10 +16,24 @@ func respond(c net.Conn) {
 
 		data := buf[0:nr]
 		log.Info().Str("Command", string(data)).Msg("Received command")
-		_, err = c.Write(data)
-		if err != nil {
-			log.Error().Msgf("Failed to write response: %s", err)
+
+		command := cmdparser.ParseCmd(string(data))
+
+		// Execute command
+		var executionResult string
+		if command != nil {
+			executionResult, err = command.Execute()
+
+			// Write response
+			if err == nil {
+				log.Debug().Str("Message", executionResult).Msg("Sending response")
+				_, err = c.Write([]byte(executionResult))
+				if err != nil {
+					log.Error().Msgf("Failed to write response: %s", err)
+				}
+			}
 		}
+
 		c.Close()
 	}
 }
