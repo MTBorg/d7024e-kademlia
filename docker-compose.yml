@@ -22,7 +22,6 @@ services:
 #      - "4000:80"
     networks:
       - kademlia_network
-    command: ["run", "cmd/kademlia/kademlia.go"]
       
 networks:
   kademlia_network:
