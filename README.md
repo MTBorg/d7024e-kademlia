@@ -4,10 +4,17 @@
 
 #### Compose
 
+There are two variants of the services, dev (development) and prod (production).
+The dev service supports hot reloading (whereas prod does not) but has a larger
+image size than the prod variant.
+What variant is used can be specified by passing either
+`docker-compose-dev.yml` or `docker-compose-prod.yml` to the relevant
+`<compose-file>` option.
+
 To run a single node using compose run
 
 ```bash
-docker-compose up
+docker-compose -f <compose-file> up
 ```
 
 #### Swarm
@@ -21,7 +28,7 @@ docker swarm init
 Then run
 
 ```bash
-docker stack deploy --compose-file docker-compose.yml kademlia
+docker stack deploy --compose-file <compose-file> kademlia
 ```
 
 ### Executing commands

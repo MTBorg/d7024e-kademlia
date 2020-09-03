@@ -1,14 +1,13 @@
 version: "3"
 services:
   kademlia:
-    image: kadlab 
+    image: kadlab_dev
     build:
       context: .
-    stdin_open: true
-    tty: true
+      dockerfile: dev.Dockerfile
     deploy:
       mode: replicated
-      replicas: 2  
+      replicas: 5  
 #        resources:
 #           limits:
 #              cpus: "0.1"
@@ -18,10 +17,10 @@ services:
         delay: 5s
         max_attempts: 3
         window: 10s
-#    ports:
-#      - "4000:80"
     networks:
-      - kademlia_network
+      - kademlia_dev_network
+    volumes:
+      - ./:/kademlia
       
 networks:
-  kademlia_network:
+  kademlia_dev_network:
