@@ -5,6 +5,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	. "kademlia/internal/command"
+	"kademlia/internal/commands/message"
 	"kademlia/internal/commands/ping"
 )
 
@@ -17,6 +18,8 @@ func ParseCmd(s string) Command {
 	switch cmd := fields[0]; cmd {
 	case "ping":
 		command = new(ping.Ping)
+	case "msg":
+		command = new(message.Message)
 	default:
 		log.Error().Str("command", cmd).Msg("Received unknown command")
 		return nil
