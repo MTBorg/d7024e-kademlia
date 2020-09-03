@@ -5,6 +5,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"kademlia/internal/command/listener"
 	. "kademlia/internal/contact"
+	"kademlia/internal/message"
 	"os"
 	"time"
 )
@@ -28,5 +29,6 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 	log.Info().Msg("Starting node...")
 
-	cmdlistener.Listen()
+	go cmdlistener.Listen()
+	msglistener.Listen()
 }
