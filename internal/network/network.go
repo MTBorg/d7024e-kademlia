@@ -2,13 +2,12 @@ package network
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	. "kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"net"
 	"strconv"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 var Net = new(Network)
