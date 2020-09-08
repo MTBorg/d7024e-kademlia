@@ -2,7 +2,7 @@ package message
 
 import (
 	"errors"
-	kademliaMessage "kademlia/internal/message"
+	kademliaMessage "kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
 
 	"github.com/rs/zerolog/log"

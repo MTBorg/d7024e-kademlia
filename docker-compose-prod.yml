@@ -7,7 +7,7 @@ services:
       dockerfile: prod.Dockerfile
     deploy:
       mode: replicated
-      replicas: 2  
+      replicas: 50  
 #        resources:
 #           limits:
 #              cpus: "0.1"
