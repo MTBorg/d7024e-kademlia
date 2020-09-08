@@ -2,8 +2,9 @@ package ping
 
 import (
 	"errors"
-
 	"github.com/rs/zerolog/log"
+	"kademlia/internal/contact"
+	"kademlia/internal/network"
 )
 
 type Ping struct {
@@ -12,9 +13,10 @@ type Ping struct {
 
 func (p Ping) Execute() (string, error) {
 	log.Debug().Str("Target", p.Target).Msg("Executing ping command")
-
-	// TODO: Implement ping
-	result := "Not yet implemented"
+	var contact = new(contact.Contact)
+	contact.Address = p.Target
+	network.Net.SendPingMessage(contact)
+	result := "PING SENT!"
 
 	return result, nil
 }

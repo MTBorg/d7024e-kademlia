@@ -2,7 +2,8 @@ package main
 
 import (
 	"kademlia/internal/command/listener"
-	"kademlia/internal/message/listener"
+	// "kademlia/internal/message/listener"
+	"kademlia/internal/network"
 	"os"
 	"time"
 
@@ -15,5 +16,7 @@ func main() {
 	log.Info().Msg("Starting node...")
 
 	go cmdlistener.Listen()
-	msglistener.Listen()
+	// msglistener.Listen()
+	network.Listen(1776)
+
 }
