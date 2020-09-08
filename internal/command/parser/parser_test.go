@@ -28,6 +28,23 @@ func TestParseCmd(t *testing.T) {
 	//should be able to parse a message command
 	// TODO: Should also test that target and content is set
 	cmd = cmdparser.ParseCmd("get somehash")
+
+	// should be able to parse a exit command
+	cmd = cmdparser.ParseCmd("exit")
+	assert.NotNil(t, cmd)
+
+	// should be able to parse a getid command
+	cmd = cmdparser.ParseCmd("getid")
+	assert.NotNil(t, cmd)
+
+	// should be able to parse a addcontact command
+	// TODO: Should also test that nodeID and address is set
+	cmd = cmdparser.ParseCmd("addcontact nodeid address")
+	assert.NotNil(t, cmd)
+
+	// should be able to parse a init command
+	// TODO: Should also test that address is set
+	cmd = cmdparser.ParseCmd("init address")
 	assert.NotNil(t, cmd)
 
 	//should return nil if an invalid command was passed

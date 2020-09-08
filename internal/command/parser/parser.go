@@ -4,8 +4,11 @@ import (
 	"strings"
 
 	. "kademlia/internal/command"
+	"kademlia/internal/commands/addcontact"
 	"kademlia/internal/commands/exit"
 	"kademlia/internal/commands/get"
+	"kademlia/internal/commands/getid"
+	"kademlia/internal/commands/initnode"
 	"kademlia/internal/commands/message"
 	"kademlia/internal/commands/ping"
 	"kademlia/internal/commands/storage"
@@ -30,6 +33,12 @@ func ParseCmd(s string) Command {
 		command = new(storage.Storage)
 	case "get":
 		command = new(get.Get)
+	case "getid":
+		command = new(getid.GetId)
+	case "addcontact":
+		command = new(addcontact.AddContact)
+	case "init":
+		command = new(initnode.InitNode)
 	default:
 		log.Error().Str("command", cmd).Msg("Received unknown command")
 		return nil
