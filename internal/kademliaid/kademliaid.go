@@ -1,7 +1,9 @@
 package kademliaid
 
 import (
+	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 )
 
@@ -12,15 +14,12 @@ const IDLength = 20
 type KademliaID [IDLength]byte
 
 // NewKademliaID returns a new instance of a KademliaID based on the string input
-func NewKademliaID(data string) *KademliaID {
-	decoded, _ := hex.DecodeString(data)
-
-	newKademliaID := KademliaID{}
-	for i := 0; i < IDLength; i++ {
-		newKademliaID[i] = decoded[i]
-	}
-
-	return &newKademliaID
+func NewKademliaID(data *string) KademliaID {
+	// Copy into slice in order to avoid array size type checking.
+	// I'm sure there's a better way to do this...
+	id := KademliaID{}
+	copy(id[:], fmt.Sprintf("%x", sha1.Sum([]byte(*data))))
+	return id
 }
 
 // NewRandomKademliaID returns a new instance of a random KademliaID,
