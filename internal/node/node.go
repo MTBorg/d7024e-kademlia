@@ -1,21 +1,29 @@
 package node
 
 import (
-	. "kademlia/internal/contact"
+	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/routingtable"
 )
 
 type Node struct {
-	Id *kademliaid.KademliaID
+	Id           *kademliaid.KademliaID
+	RoutingTable *routingtable.RoutingTable
 }
 
 var KadNode Node
 
-func (node *Node) Init() {
-	KadNode = Node{Id: kademliaid.NewRandomKademliaID()}
+// Initialize the node by generating a NodeID and creating a new routing table
+// containing itself as a contact
+func (node *Node) Init(address string) {
+	id := kademliaid.NewRandomKademliaID()
+	KadNode = Node{
+		Id:           id,
+		RoutingTable: routingtable.NewRoutingTable(contact.NewContact(id, address)),
+	}
 }
 
-func (node *Node) LookupContact(target *Contact) {
+func (node *Node) LookupContact(target *contact.Contact) {
 	// TODO
 }
 
