@@ -8,6 +8,7 @@ import (
 	"kademlia/internal/commands/exit"
 	"kademlia/internal/commands/message"
 	"kademlia/internal/commands/ping"
+	"kademlia/internal/commands/storage"
 )
 
 func ParseCmd(s string) Command {
@@ -23,6 +24,8 @@ func ParseCmd(s string) Command {
 		command = new(message.Message)
 	case "exit":
 		command = new(exit.Exit)
+	case "storage":
+		command = new(storage.Storage)
 	default:
 		log.Error().Str("command", cmd).Msg("Received unknown command")
 		return nil

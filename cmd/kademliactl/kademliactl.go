@@ -20,7 +20,7 @@ func reader(wg *sync.WaitGroup, r io.Reader) {
 	if err != nil {
 		return
 	}
-	log.Info().Str("Response", string(buf[:n])).Msg("Received response")
+	log.Info().Msgf("Received response: %s", string(buf[:n]))
 }
 
 func readCmdLineArgs() []byte {
