@@ -2,12 +2,13 @@ package network
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
 	. "kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 // TODO: Pref, env
@@ -16,23 +17,27 @@ var sendingPort = 1775
 // Net holds the cluster network
 var Net = new(Network)
 
+// A Network consists of local address, remote address and connection
 type Network struct {
 	laddr *net.UDPAddr
 	raddr *net.UDPAddr
 	conn  *net.UDPConn
 }
 
-func (network *Network) replyPingMessage(id string) {
+func (network *Network) replyPingMessage(id string) (string, error) {
 	network.laddr.Port = sendingPort
 	conn, err := net.DialUDP("udp", network.laddr, network.raddr)
 	if err != nil {
 		log.Error().Msgf("Failed to dial to UDP Address: %s", err)
+		return "", err
 	}
 	_, err = conn.Write([]byte(fmt.Sprintf("PONG %s", id)))
 	if err != nil {
 		log.Error().Msgf("Failed to write PONG to UDP Address: %s", err)
+		return "", err
 	}
 	log.Info().Str("Address", network.raddr.String()).Msg("PONG replied to address")
+	return fmt.Sprintf("PONG replied! to Address: %s", network.raddr.String()), nil
 }
 
 func (network *Network) parsePacket(data string) {
@@ -90,24 +95,27 @@ func Listen(port int) {
 }
 
 // SendPingMessage handles the client sending a PING message to a remote address
-func (network *Network) SendPingMessage(contact *Contact) {
+func (network *Network) SendPingMessage(contact *Contact) (string, error) {
 	id := fmt.Sprint(kademliaid.NewRandomKademliaID())
 	log.Info().Str("Id", id).Msg("Random Kademlia id generated")
 	raddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	if err != nil {
 		log.Error().Msgf("Failed to resolve remote UDP Address: %s", err)
+		return "", err
 	}
 	network.laddr.Port = sendingPort
 	conn, err := net.DialUDP("udp", network.laddr, raddr)
 	if err != nil {
 		log.Error().Msgf("Failed to dial to UDP Address: %s", err)
+		return "", err
 	}
 	_, err = conn.Write([]byte(fmt.Sprintf("PING %s", id)))
 	if err != nil {
 		log.Error().Msgf("Failed to write PING to UDP Address: %s", err)
+		return "", err
 	}
 	log.Info().Str("Address", contact.Address).Msg("PING sent to address")
-
+	return fmt.Sprintf("PING SENT! to Address: %s", contact.Address), nil
 }
 
 func (network *Network) SendFindContactMessage(contact *Contact) {
