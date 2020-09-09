@@ -2,7 +2,7 @@ package main
 
 import (
 	"kademlia/internal/command/listener"
-	"kademlia/internal/message"
+	"kademlia/internal/message/listener"
 	. "kademlia/internal/node"
 	"os"
 	"time"

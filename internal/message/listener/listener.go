@@ -1,6 +1,8 @@
 package msglistener
 
 import (
+	"kademlia/internal/contact"
+	"kademlia/internal/message"
 	"net"
 
 	"github.com/rs/zerolog/log"
@@ -8,17 +10,25 @@ import (
 
 const port = ":1776"
 
-func received(c net.Conn) {
+func received(c *net.UDPConn) {
 	for {
 		buf := make([]byte, 512)
-		nr, err := c.Read(buf)
+		nr, addr, err := c.ReadFromUDP(buf)
 		if err != nil {
 			continue
 		}
 
 		data := buf[0:nr]
-		log.Info().Str("Content", string(data)).Msg("Received message with content,")
+		msg, err := message.Deserialize(string(data))
+		if err == nil {
+			log.Info().Str("Content", msg.Content).Str("SenderId", msg.SenderId.String()).Msg("Received message")
 
+			c := contact.NewContact(msg.SenderId, addr.String())
+			log.Debug().Str("Id", c.ID.String()).Str("Address", c.Address).Msg("Updating bucket")
+			// TODO: Add to routing table
+		} else {
+			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message")
+		}
 	}
 }
 
@@ -37,5 +47,4 @@ func Listen() {
 	defer ln.Close()
 
 	received(ln)
-
 }
