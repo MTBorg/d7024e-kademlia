@@ -11,22 +11,19 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// TODO: Pref, env
-var sendingPort = 1775
-
-// Net holds the cluster network
 var Net = new(Network)
 
 // A Network consists of local address, remote address and connection
 type Network struct {
-	laddr *net.UDPAddr
-	raddr *net.UDPAddr
-	conn  *net.UDPConn
+	laddr      *net.UDPAddr
+	raddr      *net.UDPAddr
+	listenPort int
 }
 
 func (network *Network) replyPingMessage(id string) (string, error) {
-	network.laddr.Port = sendingPort
-	conn, err := net.DialUDP("udp", network.laddr, network.raddr)
+
+	Net.raddr.Port = Net.listenPort
+	conn, err := net.DialUDP("udp", nil, Net.raddr)
 	if err != nil {
 		log.Error().Msgf("Failed to dial to UDP Address: %s", err)
 		return "", err
@@ -37,6 +34,7 @@ func (network *Network) replyPingMessage(id string) (string, error) {
 		return "", err
 	}
 	log.Info().Str("Address", network.raddr.String()).Msg("PONG replied to address")
+	conn.Close()
 	return fmt.Sprintf("PONG replied! to Address: %s", network.raddr.String()), nil
 }
 
@@ -50,29 +48,32 @@ func (network *Network) parsePacket(data string) {
 	case "PING":
 		// TODO: Bucket AddContact (update bucket)
 		network.replyPingMessage(fields[1])
+
 	case "PONG":
 		// TODO: Bucket AddContact (update bucket)
 		log.Info().Str("Id", fields[1]).Msg("PONG received with id")
 	default:
-		log.Error().Str("packet", packet).Msg("Received unknown packet")
+		log.Error().Str("packet", packet).Msg("Received packet with unkown command")
+
 	}
 
 }
 
 // Listen initiates UDP Packet listenening on given port (UDP server)
 func Listen(port int) {
-	sp := strconv.Itoa(port)
-	laddr, err := net.ResolveUDPAddr("udp", ":"+sp)
+	var stringPort = strconv.Itoa(port)
+	Net.listenPort = port
+
+	laddr, err := net.ResolveUDPAddr("udp", ":"+stringPort)
 	if err != nil {
 		log.Error().Msgf("Failed to resolve Address: %s", err)
 	}
 	Net.laddr = laddr
-	conn, err := net.ListenUDP("udp", Net.laddr)
+	conn, err := net.ListenUDP("udp", laddr)
 	if err != nil {
 		log.Error().Msgf("Failed to listen on Address: %s", err)
 	}
-	Net.conn = conn
-	log.Info().Str("Address", Net.laddr.String()).Msg("Listening on UDP packets on address")
+	log.Info().Str("Address", laddr.String()).Msg("Listening on UDP packets on address")
 	defer conn.Close()
 
 	for {
@@ -84,7 +85,6 @@ func Listen(port int) {
 			continue
 		}
 		Net.raddr = remoteAddr
-
 		data := string(buf[0:nr])
 		log.Info().Str("Content", data).Str("From", remoteAddr.String()).Msg("Received message from and with content,")
 
@@ -96,15 +96,16 @@ func Listen(port int) {
 
 // SendPingMessage handles the client sending a PING message to a remote address
 func (network *Network) SendPingMessage(contact *Contact) (string, error) {
-	id := fmt.Sprint(kademliaid.NewRandomKademliaID())
+	var id = fmt.Sprint(kademliaid.NewRandomKademliaID())
+
 	log.Info().Str("Id", id).Msg("Random Kademlia id generated")
 	raddr, err := net.ResolveUDPAddr("udp", contact.Address)
 	if err != nil {
 		log.Error().Msgf("Failed to resolve remote UDP Address: %s", err)
 		return "", err
 	}
-	network.laddr.Port = sendingPort
-	conn, err := net.DialUDP("udp", network.laddr, raddr)
+	Net.raddr = raddr
+	conn, err := net.DialUDP("udp", nil, network.raddr)
 	if err != nil {
 		log.Error().Msgf("Failed to dial to UDP Address: %s", err)
 		return "", err
@@ -115,6 +116,7 @@ func (network *Network) SendPingMessage(contact *Contact) (string, error) {
 		return "", err
 	}
 	log.Info().Str("Address", contact.Address).Msg("PING sent to address")
+	conn.Close()
 	return fmt.Sprintf("PING SENT! to Address: %s", contact.Address), nil
 }
 

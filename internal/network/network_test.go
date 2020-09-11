@@ -1,12 +1,9 @@
 package network_test
 
 import (
-	// "kademlia/internal/commands/message"
-	// "net"
-	"testing"
-	// "github.com/stretchr/testify/assert"
+// "kademlia/internal/network"
+// "kademlia/internal/commands/message"
+// "net"
+// "github.com/stretchr/testify/assert"
+// "testing"
 )
-
-func TestListen(t *testing.T) {
-
-}
