@@ -41,7 +41,7 @@ func (d *DataStore) EntriesAsString() string {
 	if len(d.data) != 0 {
 		s = "map("
 		for key, element := range d.data {
-			s = fmt.Sprintf("%s \n %s=%s", s, key, element)
+			s = fmt.Sprintf("%s \n %x=%s", s, key, element)
 		}
 		s += "\n)"
 	} else {

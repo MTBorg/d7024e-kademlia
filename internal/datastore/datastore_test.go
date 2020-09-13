@@ -50,6 +50,6 @@ func TestEntriesAsString(t *testing.T) {
 	d.Insert(v2)
 	whitespaces := regexp.MustCompile(`\s+`)
 	fmt.Println(whitespaces.ReplaceAllString(d.EntriesAsString(), ""))
-	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%s=%s", kademliaid.NewKademliaID(&v1), v1))
-	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%s=%s", kademliaid.NewKademliaID(&v2), v2))
+	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%x=%s", kademliaid.NewKademliaID(&v1), v1))
+	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%x=%s", kademliaid.NewKademliaID(&v2), v2))
 }
