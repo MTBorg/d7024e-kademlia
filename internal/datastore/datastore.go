@@ -22,6 +22,9 @@ func (d *DataStore) Insert(value string) {
 	d.data[id] = value
 }
 
+// Gets the value from the store associated with the key.
+// Returns an empty string if the key is not found because go is an awful
+// language and should never have been invented.
 func (d *DataStore) Get(key kademliaid.KademliaID) string {
 	return d.data[key]
 }

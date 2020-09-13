@@ -3,12 +3,14 @@ package cmdparser
 import (
 	"strings"
 
-	"github.com/rs/zerolog/log"
 	. "kademlia/internal/command"
 	"kademlia/internal/commands/exit"
+	"kademlia/internal/commands/get"
 	"kademlia/internal/commands/message"
 	"kademlia/internal/commands/ping"
 	"kademlia/internal/commands/storage"
+
+	"github.com/rs/zerolog/log"
 )
 
 func ParseCmd(s string) Command {
@@ -26,6 +28,8 @@ func ParseCmd(s string) Command {
 		command = new(exit.Exit)
 	case "storage":
 		command = new(storage.Storage)
+	case "get":
+		command = new(get.Get)
 	default:
 		log.Error().Str("command", cmd).Msg("Received unknown command")
 		return nil
