@@ -1,9 +1,10 @@
 package network
 
 import (
-	"fmt"
-	. "kademlia/internal/contact"
+	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/rpc"
+	"kademlia/internal/udpsender"
 	"net"
 	"strconv"
 	"strings"
@@ -11,34 +12,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var Net = new(Network)
+var Net Network
 
 // A Network consists of local address, remote address and connection
 type Network struct {
-	laddr      *net.UDPAddr
-	raddr      *net.UDPAddr
-	listenPort int
+	port int
 }
 
-func (network *Network) replyPingMessage(id string) (string, error) {
-
-	Net.raddr.Port = Net.listenPort
-	conn, err := net.DialUDP("udp", nil, Net.raddr)
-	if err != nil {
-		log.Error().Msgf("Failed to dial to UDP Address: %s", err)
-		return "", err
-	}
-	_, err = conn.Write([]byte(fmt.Sprintf("PONG %s", id)))
-	if err != nil {
-		log.Error().Msgf("Failed to write PONG to UDP Address: %s", err)
-		return "", err
-	}
-	log.Info().Str("Address", network.raddr.String()).Msg("PONG replied to address")
-	conn.Close()
-	return fmt.Sprintf("PONG replied! to Address: %s", network.raddr.String()), nil
-}
-
-func (network *Network) parsePacket(data string) {
+func (network *Network) parsePacket(sender *contact.Contact, rpcID *kademliaid.KademliaID, data string) {
+	log.Debug().Str("String", data).Msg("Parsing data string")
 	fields := strings.Fields(data)
 	if len(fields) < 1 {
 		log.Error().Msgf("Packet is empty!")
@@ -47,7 +29,7 @@ func (network *Network) parsePacket(data string) {
 	switch packet := fields[0]; packet {
 	case "PING":
 		// TODO: Bucket AddContact (update bucket)
-		network.replyPingMessage(fields[1])
+		network.SendPongMessage(sender, rpcID)
 
 	case "PONG":
 		// TODO: Bucket AddContact (update bucket)
@@ -59,68 +41,76 @@ func (network *Network) parsePacket(data string) {
 
 }
 
-// Listen initiates UDP Packet listenening on given port (UDP server)
-func Listen(port int) {
-	var stringPort = strconv.Itoa(port)
-	Net.listenPort = port
-
-	laddr, err := net.ResolveUDPAddr("udp", ":"+stringPort)
-	if err != nil {
-		log.Error().Msgf("Failed to resolve Address: %s", err)
-	}
-	Net.laddr = laddr
-	conn, err := net.ListenUDP("udp", laddr)
-	if err != nil {
-		log.Error().Msgf("Failed to listen on Address: %s", err)
-	}
-	log.Info().Str("Address", laddr.String()).Msg("Listening on UDP packets on address")
-	defer conn.Close()
-
+func (network *Network) received(c *net.UDPConn) {
 	for {
-
 		buf := make([]byte, 512)
-
-		nr, remoteAddr, err := conn.ReadFromUDP(buf)
+		nr, addr, err := c.ReadFromUDP(buf)
 		if err != nil {
 			continue
 		}
-		Net.raddr = remoteAddr
-		data := string(buf[0:nr])
-		log.Info().Str("Content", data).Str("From", remoteAddr.String()).Msg("Received message from and with content,")
+		data := buf[0:nr]
+		rpc, err := rpc.Deserialize(string(data))
+		if err == nil {
+			log.Info().Str("Content", rpc.Content).Str("SenderId", rpc.SenderId.String()).Msg("Received message")
 
-		Net.parsePacket(data)
+			c := contact.NewContact(rpc.SenderId, addr.String())
+			network.parsePacket(&c, rpc.RPCId, rpc.Content)
 
+			log.Debug().Str("Id", c.ID.String()).Str("Address", c.Address).Msg("Updating bucket")
+			// TODO: Add to routing table
+		} else {
+			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message")
+		}
 	}
-
 }
 
-// SendPingMessage handles the client sending a PING message to a remote address
-func (network *Network) SendPingMessage(contact *Contact) (string, error) {
-	var id = fmt.Sprint(kademliaid.NewRandomKademliaID())
+// Listen for UDP on port
+func Listen(port int) {
+	Net.port = port
+	addr, err := net.ResolveUDPAddr("udp4", ":"+strconv.Itoa(port))
+	if err != nil {
+		log.Error().Msgf("Failed to resolve UDP Address: %s", err)
+	}
 
-	log.Info().Str("Id", id).Msg("Random Kademlia id generated")
-	raddr, err := net.ResolveUDPAddr("udp", contact.Address)
+	ln, err := net.ListenUDP("udp4", addr)
 	if err != nil {
-		log.Error().Msgf("Failed to resolve remote UDP Address: %s", err)
-		return "", err
+		log.Error().Msgf("Failed to listen on UDP Address: %s", err)
 	}
-	Net.raddr = raddr
-	conn, err := net.DialUDP("udp", nil, network.raddr)
-	if err != nil {
-		log.Error().Msgf("Failed to dial to UDP Address: %s", err)
-		return "", err
-	}
-	_, err = conn.Write([]byte(fmt.Sprintf("PING %s", id)))
-	if err != nil {
-		log.Error().Msgf("Failed to write PING to UDP Address: %s", err)
-		return "", err
-	}
-	log.Info().Str("Address", contact.Address).Msg("PING sent to address")
-	conn.Close()
-	return fmt.Sprintf("PING SENT! to Address: %s", contact.Address), nil
+	log.Info().Str("Address", addr.String()).Msg("Listening on UDP packets on address")
+	defer ln.Close()
+
+	Net.received(ln)
 }
 
-func (network *Network) SendFindContactMessage(contact *Contact) {
+// SendPongMessage replies a "PONG" message to the remote "pinger" address
+func (network *Network) SendPongMessage(contact *contact.Contact, id *kademliaid.KademliaID) {
+
+	log.Debug().Str("Address", contact.Address).Msg("Sending PONG to address")
+	rpc := rpc.New("PONG", contact.Address)
+	rpc.RPCId = id
+	udpSender := udpsender.New(contact.Address)
+	err := rpc.Send(udpSender)
+
+	if err != nil {
+		log.Error().Msgf("Failed to write RPC PING message to UDP: %s", err.Error())
+		log.Info().Str("Address", contact.Address).Str("Content", "PING").Msg("Message sent to address")
+	}
+}
+
+// SendPingMessage sends a "PING" message to a remote address
+func (network *Network) SendPingMessage(contact *contact.Contact) {
+
+	rpc := rpc.New("PING", contact.Address)
+	udpSender := udpsender.New(contact.Address)
+	err := rpc.Send(udpSender)
+
+	if err != nil {
+		log.Error().Msgf("Failed to write RPC PING message to UDP: %s", err.Error())
+		log.Info().Str("Address", contact.Address).Str("Content", "PING").Msg("Message sent to address")
+	}
+}
+
+func (network *Network) SendFindContactMessage(contact *contact.Contact) {
 	// TODO
 }
 
