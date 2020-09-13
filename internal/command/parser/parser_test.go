@@ -25,6 +25,11 @@ func TestParseCmd(t *testing.T) {
 	cmd = cmdparser.ParseCmd("msg some message")
 	assert.NotNil(t, cmd)
 
+	//should be able to parse a message command
+	// TODO: Should also test that target and content is set
+	cmd = cmdparser.ParseCmd("get somehash")
+	assert.NotNil(t, cmd)
+
 	//should return nil if an invalid command was passed
 	cmd = cmdparser.ParseCmd("non-existent command")
 	assert.Nil(t, cmd)
