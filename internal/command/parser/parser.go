@@ -11,6 +11,7 @@ import (
 	"kademlia/internal/commands/initnode"
 	"kademlia/internal/commands/message"
 	"kademlia/internal/commands/ping"
+	"kademlia/internal/commands/put"
 	"kademlia/internal/commands/storage"
 
 	"github.com/rs/zerolog/log"
@@ -39,6 +40,8 @@ func ParseCmd(s string) Command {
 		command = new(addcontact.AddContact)
 	case "init":
 		command = new(initnode.InitNode)
+	case "put":
+		command = new(put.Put)
 	default:
 		log.Error().Str("command", cmd).Msg("Received unknown command")
 		return nil

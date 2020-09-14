@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"github.com/rs/zerolog/log"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
@@ -24,6 +25,7 @@ func (network *Network) parsePacket(sender *contact.Contact, rpcID *kademliaid.K
 	fields := strings.Fields(data)
 	if len(fields) < 1 {
 		log.Error().Msgf("Packet is empty!")
+		//TODO: Should stop execution here so indexing below does not crash
 	}
 
 	switch packet := fields[0]; packet {
@@ -31,15 +33,16 @@ func (network *Network) parsePacket(sender *contact.Contact, rpcID *kademliaid.K
 		node.KadNode.RoutingTable.AddContact(*sender) // Add to node routingtable
 		log.Info().Str("Id", rpcID.String()).Msg("PING received with RPC id")
 		network.SendPongMessage(sender.Address, rpcID)
-
 	case "PONG":
 		node.KadNode.RoutingTable.AddContact(*sender) // Add to node routingtable
 		log.Info().Str("Id", rpcID.String()).Msg("PONG received with RPC id")
+	case "STORE":
+		log.Info().Str("Id", rpcID.String()).Msg("STORE received with RPC id")
+		file := strings.Join(fields[1:], " ")
+		node.KadNode.Store(&file)
 	default:
 		log.Error().Str("packet", packet).Msg("Received packet with unkown command")
-
 	}
-
 }
 
 func (network *Network) received(c *net.UDPConn) {
@@ -119,6 +122,14 @@ func (network *Network) SendFindDataMessage(hash string) {
 	// TODO
 }
 
-func (network *Network) SendStoreMessage(data []byte) {
-	// TODO
+func (network *Network) SendStoreMessage(target string, data []byte) {
+	log.Debug().Str("Target", target).Msg("Sending store message")
+	rpc := rpc.New(fmt.Sprintf("%s %s", "STORE", data), target)
+	udpSender := udpsender.New(target)
+	err := rpc.Send(udpSender)
+
+	if err != nil {
+		log.Error().Msgf("Failed to write RPC STORE message to UDP: %s", err.Error())
+		log.Info().Str("Address", target).Str("Content", "STORE").Msg("Message sent to address")
+	}
 }

@@ -2,8 +2,11 @@ package node
 
 import (
 	"kademlia/internal/contact"
+	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/routingtable"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Node struct {
@@ -31,6 +34,7 @@ func (node *Node) LookupData(hash string) {
 	// TODO
 }
 
-func (node *Node) Store(data []byte) {
-	// TODO
+func (node *Node) Store(value *string) {
+	log.Debug().Str("Value", *value).Msg("Storing value")
+	datastore.Store.Insert(*value)
 }
