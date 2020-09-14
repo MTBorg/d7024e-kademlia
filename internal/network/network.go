@@ -4,6 +4,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/node"
 	"kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
 	"net"
@@ -27,12 +28,12 @@ func (network *Network) parsePacket(sender *contact.Contact, rpcID *kademliaid.K
 
 	switch packet := fields[0]; packet {
 	case "PING":
-		// TODO: Bucket AddContact (update bucket)
+		node.KadNode.RoutingTable.AddContact(*sender) // Add to node routingtable
 		log.Info().Str("Id", rpcID.String()).Msg("PING received with RPC id")
 		network.SendPongMessage(sender.Address, rpcID)
 
 	case "PONG":
-		// TODO: Bucket AddContact (update bucket)
+		node.KadNode.RoutingTable.AddContact(*sender) // Add to node routingtable
 		log.Info().Str("Id", rpcID.String()).Msg("PONG received with RPC id")
 	default:
 		log.Error().Str("packet", packet).Msg("Received packet with unkown command")
@@ -57,7 +58,6 @@ func (network *Network) received(c *net.UDPConn) {
 			network.parsePacket(&c, rpc.RPCId, rpc.Content)
 
 			log.Debug().Str("Id", c.ID.String()).Str("Address", c.Address).Msg("Updating bucket")
-			// TODO: Add to routing table
 		} else {
 			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message")
 		}
