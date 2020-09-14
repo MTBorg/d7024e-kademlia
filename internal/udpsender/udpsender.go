@@ -2,25 +2,32 @@ package udpsender
 
 import (
 	"net"
+	"strconv"
 
 	"github.com/rs/zerolog/log"
 )
 
 type UDPSender struct {
-	target string
+	target *net.UDPAddr
 }
 
 func New(target string) UDPSender {
-	return UDPSender{target: target}
+	host, port, err := net.SplitHostPort(target)
+	if err != nil {
+		log.Error().Str("Target", target).Msgf("Failed to parse given target address: %s", err)
+	}
+	iport, err := strconv.Atoi(port)
+	if err != nil {
+		log.Error().Str("Port", port).Msgf("Failed to parse given string port to int: %s", err)
+	}
+	return UDPSender{target: &net.UDPAddr{
+		IP:   net.ParseIP(host),
+		Port: iport,
+	}}
 }
 
 func (udp UDPSender) Send(data string) error {
-	dest, err := net.ResolveUDPAddr("udp4", udp.target)
-	if err != nil {
-		log.Error().Msgf("Failed to resolve UDP address: %s", err)
-	}
-
-	conn, err := net.DialUDP("udp4", nil, dest)
+	conn, err := net.DialUDP("udp4", nil, udp.target)
 	if err != nil {
 		log.Error().Msgf("Failed to dial to UDP address: %s", err)
 	}

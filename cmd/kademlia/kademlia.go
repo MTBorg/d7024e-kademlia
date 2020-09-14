@@ -2,9 +2,8 @@ package main
 
 import (
 	"kademlia/internal/command/listener"
-	. "kademlia/internal/contact"
-	// "kademlia/internal/message"
-	// "kademlia/internal/bucket"
+	"net"
+	// "kademlia/internal/message/listener"
 	"kademlia/internal/network"
 	"os"
 	"time"
@@ -13,11 +12,35 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+func getHostIP() string {
+	addresses, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Error().Msgf("Failed to get container interface addresses: %s", err)
+	}
+	for _, address := range addresses {
+
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
+}
+
 func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
-	log.Info().Msg("Starting node...")
+	host, err := os.Hostname()
+	ip := getHostIP()
+	if err != nil {
+		log.Error().Str("Host", host).Msgf("Failed to get container host: %s", err)
+	}
+	log.Info().Str("Hostname", host).Str("IP", ip).Msg("Starting node...")
+
 	go cmdlistener.Listen()
 	// msglistener.Listen()
-	network.Listen(1776)
+	log.Info().Msg("Starting node...")
+	network.Listen(ip, 1776)
 
 }

@@ -2,8 +2,6 @@ package ping
 
 import (
 	"errors"
-	"kademlia/internal/contact"
-	"kademlia/internal/kademliaid"
 	"kademlia/internal/network"
 
 	"github.com/rs/zerolog/log"
@@ -15,8 +13,7 @@ type Ping struct {
 
 func (p Ping) Execute() (string, error) {
 	log.Debug().Str("Target", p.Target).Msg("Executing ping command")
-	var contact = contact.NewContact(kademliaid.NewRandomKademliaID(), p.Target)
-	network.Net.SendPingMessage(&contact)
+	network.Net.SendPingMessage(p.Target)
 
 	return "Ping sent!", nil
 
