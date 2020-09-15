@@ -25,35 +25,35 @@ func TestNew(t *testing.T) {
 	var content, target = "some message", "127.0.0.1:1337"
 	rpc := rpc.New(content, target)
 
-	assert.Equal(t, msg.Target, target)
-	assert.Equal(t, msg.Content, content)
+	assert.Equal(t, rpc.Target, target)
+	assert.Equal(t, rpc.Content, content)
 }
 
 func TestDeserialize(t *testing.T) {
-	var rpc rpc.RPC
+	var r rpc.RPC
 	var err error
 	// Should return an empty message and error if the string is empty
-	rpc, err = rpc.Deserialize("")
-	assert.Empty(t, msg)
+	r, err = rpc.Deserialize("")
+	assert.Empty(t, r)
 	assert.Error(t, err)
 
 	// Should return an empty message and error if the string only contains a
 	// sender id and no separator
-	rpc, err = rpc.Deserialize("senderid")
-	assert.Empty(t, msg)
+	r, err = rpc.Deserialize("senderid")
+	assert.Empty(t, r)
 	assert.Error(t, err)
 
 	// Should be able to pass empty content
-	rpc, err = rpc.Deserialize("senderid;")
+	r, err = rpc.Deserialize("senderid;rpcid;")
 	assert.NoError(t, err)
-	assert.Equal(t, msg.Content, "")
+	assert.Equal(t, r.Content, "")
 }
 
 func TestSend(t *testing.T) {
 	testId := strings.Repeat("1", 40) //IDs are 160-bit (= 40 hex characters)
 	var senderMock *SenderMock
-	rpc := rpc.RPC{SenderId: kademliaid.FromString(testId), Content: "content", Target: "target"}
-	rpcSerialized := fmt.Sprintf("%s;content", testId)
+	rpc := rpc.RPC{SenderId: kademliaid.FromString(testId), RPCId: kademliaid.FromString(testId), Content: "content", Target: "target"}
+	rpcSerialized := fmt.Sprintf("%s;%s;content", testId, testId)
 	var err error
 
 	// Should return the error from send if there was an error
@@ -65,7 +65,7 @@ func TestSend(t *testing.T) {
 
 	// Should return nil if send does not return an error
 	senderMock = new(SenderMock)
-	senderMock.On("Send", msgSerialized).Return(nil)
+	senderMock.On("Send", rpcSerialized).Return(nil)
 	err = rpc.Send(senderMock)
 	assert.NoError(t, err)
 	senderMock.AssertExpectations(t)

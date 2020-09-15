@@ -36,8 +36,8 @@ func (rpc *RPC) serialize() string {
 func Deserialize(s string) (RPC, error) {
 	log.Debug().Str("String", s).Msg("Dezerializing string")
 	fields := strings.Split(s, ";")
-	if len(fields) <= 1 {
-		return RPC{}, errors.New("Missing sender id")
+	if len(fields) <= 2 {
+		return RPC{}, errors.New("Missing sender id or rpc id")
 	} else {
 		id := kademliaid.FromString(fields[0])
 		RPCId := kademliaid.FromString(fields[1])
