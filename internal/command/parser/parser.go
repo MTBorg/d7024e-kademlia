@@ -7,6 +7,7 @@ import (
 	"kademlia/internal/commands/addcontact"
 	"kademlia/internal/commands/exit"
 	"kademlia/internal/commands/get"
+	"kademlia/internal/commands/getcontacts"
 	"kademlia/internal/commands/getid"
 	"kademlia/internal/commands/initnode"
 	"kademlia/internal/commands/message"
@@ -38,6 +39,8 @@ func ParseCmd(s string) Command {
 		command = new(getid.GetId)
 	case "addcontact":
 		command = new(addcontact.AddContact)
+	case "getcontacts":
+		command = new(getcontacts.GetContacts)
 	case "init":
 		command = new(initnode.InitNode)
 	case "put":
