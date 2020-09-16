@@ -2,7 +2,7 @@ package main
 
 import (
 	"kademlia/internal/command/listener"
-	"kademlia/internal/network"
+	"kademlia/internal/udplistener"
 	"net"
 	"os"
 	"time"
@@ -38,6 +38,5 @@ func main() {
 	log.Info().Str("Hostname", host).Str("IP", ip).Msg("Starting node...")
 
 	go cmdlistener.Listen()
-	network.Listen(ip, 1776)
-
+	udplistener.Listen(ip, 1776)
 }
