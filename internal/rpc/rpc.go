@@ -3,10 +3,11 @@ package rpc
 import (
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type RPC struct {
