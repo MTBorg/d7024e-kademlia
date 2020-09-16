@@ -64,13 +64,16 @@ func (routingTable *RoutingTable) FindClosestContacts(target *kademliaid.Kademli
 // GetContacts returns a newline string with contacts in the nodes routingtable
 func (routingTable *RoutingTable) GetContacts() string {
 	s := ""
+	if routingTable == nil {
+		return "Empty! Please, populate the routingtable..."
+	}
 	for _, bucket := range routingTable.buckets {
-		if bucket != nil {
+		if bucket != nil && bucket.Len() > 0 {
 			s += fmt.Sprintf("%+v\n", bucket.GetContactAndCalcDistance(routingTable.me.ID))
 
 		}
-
 	}
+
 	return s
 
 }
