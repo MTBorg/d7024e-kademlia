@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"math/rand"
+	"time"
 )
 
 // the static number of bytes in a KademliaID
@@ -21,6 +22,7 @@ func NewKademliaID(data *string) KademliaID {
 // NewRandomKademliaID returns a new instance of a random KademliaID,
 // change this to a better version if you like
 func NewRandomKademliaID() *KademliaID {
+	rand.Seed(time.Now().UTC().UnixNano()) // Update the seed
 	newKademliaID := KademliaID{}
 	for i := 0; i < IDLength; i++ {
 		newKademliaID[i] = uint8(rand.Intn(256))
