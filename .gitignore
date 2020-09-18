@@ -17,3 +17,6 @@ bin
 
 # IDE
 .vscode
+
+# environment
+.env

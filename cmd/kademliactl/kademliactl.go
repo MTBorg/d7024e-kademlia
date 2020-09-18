@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"io"
+	"kademlia/internal/logger"
 	"kademlia/internal/utils/arrays"
 	"net"
 	"os"
 	"sync"
-	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func reader(wg *sync.WaitGroup, r io.Reader) {
@@ -44,7 +44,7 @@ func sendMessage(msg *[]byte) {
 }
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+	logger.InitLogger(os.Getenv("LOG_LEVEL"))
 
 	if len(os.Args) > 1 { // If a command was specified
 		msg := arrays.StrArrayToByteArray(os.Args[1:])

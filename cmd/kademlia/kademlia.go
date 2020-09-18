@@ -2,12 +2,11 @@ package main
 
 import (
 	"kademlia/internal/command/listener"
+	"kademlia/internal/logger"
 	"kademlia/internal/udplistener"
 	"net"
 	"os"
-	"time"
 
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,7 +28,7 @@ func getHostIP() string {
 }
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
+	logger.InitLogger(os.Getenv("LOG_LEVEL"))
 	host, err := os.Hostname()
 	ip := getHostIP()
 	if err != nil {

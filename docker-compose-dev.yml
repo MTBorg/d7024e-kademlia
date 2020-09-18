@@ -21,6 +21,8 @@ services:
       - kademlia_dev_network
     volumes:
       - ./:/kademlia
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
       
 networks:
   kademlia_dev_network:
