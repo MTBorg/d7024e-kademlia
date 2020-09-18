@@ -25,10 +25,10 @@ func reader(wg *sync.WaitGroup, r io.Reader) {
 
 func sendMessage(msg *[]byte) {
 	c, err := net.Dial("unix", "/tmp/echo.sock")
+	defer c.Close()
 	if err != nil {
 		panic(err)
 	}
-	defer c.Close()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
