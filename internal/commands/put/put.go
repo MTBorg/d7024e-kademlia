@@ -16,14 +16,15 @@ type Put struct {
 }
 
 func (put *Put) Execute(node *node.Node) (string, error) {
-
 	log.Debug().Msg("Executing put command")
+
 	k, err := strconv.Atoi(os.Getenv("K"))
 	if err != nil {
 		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
 	}
+
 	key := kademliaid.NewKademliaID(&put.fileContent)
-	closestNodes := node.RoutingTable.FindClosestContacts(&key, k)
+	closestNodes := node.FindKClosest(&key, nil, k)
 
 	node.Store(&put.fileContent)
 

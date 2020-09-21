@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"kademlia/internal/address"
-	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
@@ -43,8 +42,27 @@ func (network *Network) SendPingMessage(senderId *kademliaid.KademliaID, target 
 	}
 }
 
-func (network *Network) SendFindContactMessage(contact *contact.Contact) {
-	// TODO
+func (network *Network) SendFindContactMessage(rpc *rpc.RPC) {
+	udpSender := udpsender.New(rpc.Target)
+	err := rpc.Send(udpSender)
+	if err != nil {
+		log.Error().Msgf("Failed to write FIND_NODE RPC to UDP: %s", err.Error())
+	}
+	log.Info().Str("Address", rpc.Target.String()).Str("rpcId", rpc.RPCId.String()).Str("Content", rpc.Content).Msg("FIND_NODE sent to address")
+}
+
+// SendFindContactRespMessage responds to a FIND_NODE RPC by returning the k
+// closest contacts to the key that the node knows of
+func (network *Network) SendFindContactRespMessage(senderId *kademliaid.KademliaID, target *address.Address, rpcId *kademliaid.KademliaID, content *string) {
+
+	rpc := rpc.NewWithID(senderId, fmt.Sprintf("%s %s", "FIND_NODE_RESPONSE", *content), target, rpcId)
+
+	udpSender := udpsender.New(target)
+	err := rpc.Send(udpSender)
+	if err != nil {
+		log.Error().Msgf("Failed to write FIND_NODE_RESPONSE message to UDP: %s", err.Error())
+	}
+	log.Info().Str("Address", target.String()).Str("Content", *content).Msg("FIND_NODE_RESPONSE sent to address")
 }
 
 func (network *Network) SendFindDataMessage(rpc rpc.RPC) {

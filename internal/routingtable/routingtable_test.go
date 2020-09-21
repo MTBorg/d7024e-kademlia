@@ -44,13 +44,14 @@ func TestAddContact(t *testing.T) {
 func TestFindClosestContacts(t *testing.T) {
 	node := node.Node{}
 	id := kademliaid.NewRandomKademliaID()
+	id2 := kademliaid.NewRandomKademliaID()
 	adr := address.New("127.0.0.1")
 	c := contact.NewContact(id, adr)
 	node.Init(adr)
 	node.RoutingTable.AddContact(c)
 
 	// should not return a index
-	assert.NotNil(t, node.RoutingTable.FindClosestContacts(id, 1))
+	assert.NotNil(t, node.RoutingTable.FindClosestContacts(id, id2, 1))
 
 }
 

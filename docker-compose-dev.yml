@@ -7,11 +7,11 @@ services:
       dockerfile: dev.Dockerfile
     deploy:
       mode: replicated
-      replicas: 5  
-#        resources:
-#           limits:
-#              cpus: "0.1"
-#              memory: 50M
+      replicas: 5
+      #        resources:
+      #           limits:
+      #              cpus: "0.1"
+      #              memory: 50M
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -23,8 +23,8 @@ services:
       - ./:/kademlia
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-debug}
-      - K=20
-      - ALPHA=3
-      
+      - K=5
+      - ALPHA=1
+
 networks:
   kademlia_dev_network:
