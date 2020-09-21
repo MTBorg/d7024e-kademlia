@@ -1,10 +1,12 @@
 package contact
 
 import (
+	"errors"
 	"fmt"
 	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
 	"sort"
+	"strings"
 )
 
 func Myprint() {
@@ -76,4 +78,29 @@ func (candidates *ContactCandidates) Swap(i, j int) {
 // the Contact at index j
 func (candidates *ContactCandidates) Less(i, j int) bool {
 	return candidates.contacts[i].Less(&candidates.contacts[j])
+}
+
+func (contact *Contact) serialize() string {
+	return fmt.Sprintf("%s!%s", contact.ID.String(), contact.Address.String())
+}
+
+func SerializeContacts(contacts []Contact) string {
+	s := ""
+	for i, contact := range contacts {
+		if i != len(contacts)-1 {
+			s += contact.serialize() + " "
+		} else {
+			s += contact.serialize()
+		}
+	}
+	return s
+}
+
+func Deserialize(s *string) (error, *Contact) {
+	fields := strings.Split(*s, "!")
+	if len(fields) == 0 || len(fields) == 1 {
+		return errors.New("blabla"), nil
+	}
+	adr := address.New(fields[1])
+	return nil, &Contact{ID: kademliaid.FromString(fields[0]), Address: adr}
 }

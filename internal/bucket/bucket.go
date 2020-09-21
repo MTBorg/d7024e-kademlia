@@ -57,6 +57,23 @@ func (bucket *Bucket) GetContactAndCalcDistance(target *KademliaID) []Contact {
 	return contacts
 }
 
+// GetContactAndCalcDistance returns an array of Contacts where the distance
+// has already been calculated. This array will never contain a contact with
+// the same nodeID as the requestorID.
+func (bucket *Bucket) GetContactAndCalcDistanceNoRequestor(target *KademliaID, requestorID *KademliaID) []Contact {
+
+	var contacts []Contact
+
+	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
+		contact := elt.Value.(Contact)
+		if contact.ID != requestorID {
+			contact.CalcDistance(target)
+			contacts = append(contacts, contact)
+		}
+	}
+	return contacts
+}
+
 // Len return the size of the bucket
 func (bucket *Bucket) Len() int {
 	return bucket.list.Len()
