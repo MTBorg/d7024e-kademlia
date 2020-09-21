@@ -27,7 +27,7 @@ func ParseRPC(sender *contact.Contact, rpc *rpc.RPC) (rpccommand.RPCCommand, err
 	switch identifier := fields[0]; identifier {
 	case "PING":
 		rpcLog.Msg("PING received")
-		cmd = ping.New(&sender.Address, rpc.RPCId)
+		cmd = ping.New(sender.Address, rpc.RPCId)
 	case "PONG":
 		rpcLog.Msg("PONG received")
 		cmd = pong.New()

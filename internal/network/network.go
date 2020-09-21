@@ -3,11 +3,11 @@ package network
 import (
 	"fmt"
 	"github.com/rs/zerolog/log"
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
-	"net"
 )
 
 var Net Network
@@ -15,34 +15,29 @@ var Net Network
 type Network struct{}
 
 // SendPongMessage replies a "PONG" message to the remote "pinger" address
-func (network *Network) SendPongMessage(target string, id *kademliaid.KademliaID) {
-	host, _, err := net.SplitHostPort(target)
-	if err != nil {
-		log.Error().Str("Target", host).Msgf("Failed to parse given target address: %s", err)
-	}
-	target = net.JoinHostPort(host, "1776") //TODO: Don't hardcode
+func (network *Network) SendPongMessage(target *address.Address, id *kademliaid.KademliaID) {
 
-	log.Debug().Str("Address", target).Msg("Sending PONG to address")
-	rpc := rpc.New("PONG", target)
+	log.Debug().Str("Address", target.String()).Msg("Sending PONG to address")
+	rpc := rpc.New("PONG", target.String())
 	rpc.RPCId = id
-	udpSender := udpsender.New(target)
-
-	err = rpc.Send(udpSender)
-	if err != nil {
-		log.Error().Msgf("Failed to write RPC PING message to UDP: %s", err.Error())
-		log.Info().Str("Address", target).Str("Content", "PING").Msg("Message sent to address")
-	}
-}
-
-// SendPingMessage sends a "PING" message to a remote address
-func (network *Network) SendPingMessage(target string) {
-	rpc := rpc.New("PING", target)
-	udpSender := udpsender.New(target)
+	udpSender := udpsender.New(target.String())
 
 	err := rpc.Send(udpSender)
 	if err != nil {
 		log.Error().Msgf("Failed to write RPC PING message to UDP: %s", err.Error())
-		log.Info().Str("Address", target).Str("Content", "PING").Msg("Message sent to address")
+		log.Info().Str("Address", target.String()).Str("Content", "PING").Msg("Message sent to address")
+	}
+}
+
+// SendPingMessage sends a "PING" message to a remote address
+func (network *Network) SendPingMessage(target *address.Address) {
+	rpc := rpc.New("PING", target.String())
+	udpSender := udpsender.New(target.String())
+
+	err := rpc.Send(udpSender)
+	if err != nil {
+		log.Error().Msgf("Failed to write RPC PING message to UDP: %s", err.Error())
+		log.Info().Str("Address", target.String()).Str("Content", "PING").Msg("Message sent to address")
 	}
 }
 
@@ -54,14 +49,14 @@ func (network *Network) SendFindDataMessage(hash string) {
 	// TODO
 }
 
-func (network *Network) SendStoreMessage(target string, data []byte) {
-	log.Debug().Str("Target", target).Msg("Sending store message")
-	rpc := rpc.New(fmt.Sprintf("%s %s", "STORE", data), target)
-	udpSender := udpsender.New(target)
+func (network *Network) SendStoreMessage(target *address.Address, data []byte) {
+	log.Debug().Str("Target", target.String()).Msg("Sending store message")
+	rpc := rpc.New(fmt.Sprintf("%s %s", "STORE", data), target.String())
+	udpSender := udpsender.New(target.String())
 	err := rpc.Send(udpSender)
 
 	if err != nil {
 		log.Error().Msgf("Failed to write RPC STORE message to UDP: %s", err.Error())
-		log.Info().Str("Address", target).Str("Content", "STORE").Msg("Message sent to address")
+		log.Info().Str("Address", target.String()).Str("Content", "STORE").Msg("Message sent to address")
 	}
 }
