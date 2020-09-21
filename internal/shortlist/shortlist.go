@@ -105,17 +105,16 @@ func (sl *Shortlist) Add(c *contact.Contact) {
 	if sl.Len() == k {
 		if c.Less(&sl.Entries[k-1].Contact) {
 			sl.Entries[k-1] = &Entry{Contact: *c, Active: false, Probed: false}
-			sort.Sort(sl)
-			sl.Closest = &sl.Entries[0].Contact
 		}
 	} else {
 		for i := 0; i < len(sl.Entries); i++ {
 			if sl.Entries[i] == nil {
 				sl.Entries[i] = &Entry{Contact: *c, Active: false, Probed: false}
-				sort.Sort(sl)
-				sl.Closest = &sl.Entries[0].Contact
 				break
 			}
 		}
 	}
+
+	sort.Sort(sl)
+	sl.Closest = &sl.Entries[0].Contact
 }

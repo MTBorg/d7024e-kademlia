@@ -13,6 +13,7 @@ import (
 	"kademlia/internal/rpcpool"
 	"kademlia/internal/shortlist"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -151,8 +152,100 @@ func NewRPCWithID(senderId *kademliaid.KademliaID, content string, target *addre
 	}
 }
 
-func (node *Node) LookupData(hash string) {
-	// TODO
+func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
+	alpha, err := strconv.Atoi(os.Getenv("ALPHA"))
+	if err != nil {
+		log.Error().Msgf("Failed to convert env variable ALPHA from string to int: %s", err)
+	}
+
+	log.Debug().Str("ID", hash.String()).Msg("Looking up id")
+
+	sl := shortlist.NewShortlist(hash, node.FindKClosest(hash, nil, alpha))
+
+	// iterative lookup until the search becomes stale and no closer node
+	// can be found
+	stale := false
+	for !stale {
+		log.Trace().Str("TargetID", hash.String()).Msg("New round of probing")
+		channels := make([]chan string, alpha)
+
+		// probe at most the alpha closest nodes
+		probed := 0
+		rpcIDs := []*kademliaid.KademliaID{}
+		for i := 0; i < sl.Len() && probed < alpha; i++ {
+			if !sl.Entries[i].Probed && !sl.Entries[i].Contact.ID.Equals(node.ID) {
+				log.Debug().Str("ID", sl.Entries[i].Contact.ID.String()).Msg("Probing node")
+				sl.Entries[i].Probed = true
+				rpc := node.NewRPC(
+					fmt.Sprintf("FIND_VALUE %s", hash.String()),
+					sl.Entries[i].Contact.Address)
+				rpcIDs = append(rpcIDs, rpc.RPCId)
+
+				log.Trace().Msg("Adding to rpc pool")
+				node.RPCPool.Add(rpc.RPCId)
+				entry := node.RPCPool.GetEntry(rpc.RPCId)
+				channels[probed] = entry.Channel
+				probed++
+				network.Net.SendFindDataMessage(&rpc)
+			}
+		}
+
+		if probed == 0 {
+			log.Trace().Msg("No nodes were probed")
+			break
+		}
+
+		contacts := []*contact.Contact{}
+		for i := 0; i < probed; i++ {
+			log.Trace().Str("Channel", fmt.Sprintf("%d", i)).Msg("Waiting for channel")
+			data := <-channels[i]
+			log.Trace().
+				Str("RPCID", rpcIDs[i].String()).
+				Int("Index", i).
+				Msg("Deleting RPCPool entry")
+			node.RPCPool.Delete(rpcIDs[i])
+
+			log.Debug().Str("Data", data).Msg("Received data from channel")
+
+			if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
+				regex := regexp.MustCompile(`=`)
+				s := regex.Split(data, 2)
+				value := s[1]
+				log.Info().Str("Value", value).Msg("Found value")
+				for j := i + 1; j < probed; j++ {
+					log.Trace().Str("RPCID", rpcIDs[j].String()).Msg("Deleting RPCPool entry")
+					node.RPCPool.Delete(rpcIDs[j])
+				}
+
+				return value
+			} else {
+				sContacts := strings.Split(data, " ")
+				for _, sContact := range sContacts {
+					err, c := contact.Deserialize(&sContact)
+					if err == nil {
+						c.CalcDistance(hash)
+						contacts = append(contacts, c)
+					} else {
+						log.Warn().Msgf("Failed to deserialize contact: %s", err)
+						log.Print(sContact)
+					}
+				}
+			}
+		}
+
+		for _, c := range contacts {
+			sl.Add(c)
+		}
+
+		// DEBUG PRINT
+		log.Print("Shortlist")
+		for _, entry := range sl.Entries {
+			log.Print(entry)
+		}
+
+	}
+
+	return ""
 }
 
 func (node *Node) Store(value *string) {
