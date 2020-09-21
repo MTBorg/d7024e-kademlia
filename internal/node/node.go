@@ -4,14 +4,13 @@ import (
 	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
-	"kademlia/internal/kademliaid"
+	"kademlia/internal/globals"
 	"kademlia/internal/routingtable"
 
 	"github.com/rs/zerolog/log"
 )
 
 type Node struct {
-	Id           *kademliaid.KademliaID
 	RoutingTable *routingtable.RoutingTable
 }
 
@@ -19,12 +18,10 @@ var KadNode Node
 
 // Initialize the node by generating a NodeID and creating a new routing table
 // containing itself as a contact
-func (node *Node) Init(target string) {
-	id := kademliaid.NewRandomKademliaID()
-	adr := address.New(target)
+func (node *Node) Init(address address.Address) {
+	me := contact.NewContact(globals.ID, &address)
 	KadNode = Node{
-		Id:           id,
-		RoutingTable: routingtable.NewRoutingTable(contact.NewContact(id, &adr)),
+		RoutingTable: routingtable.NewRoutingTable(me),
 	}
 }
 

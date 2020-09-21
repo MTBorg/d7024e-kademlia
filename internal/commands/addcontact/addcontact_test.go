@@ -2,6 +2,7 @@ package addcontact_test
 
 import (
 	// "fmt"
+	"kademlia/internal/address"
 	"kademlia/internal/commands/addcontact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
@@ -40,7 +41,7 @@ func TestExecute(t *testing.T) {
 	var addcCmd *addcontact.AddContact
 
 	// should add the contact
-	node.KadNode.Init("127.0.0.1:1776")
+	node.KadNode.Init(address.New("127.0.0.1:1776"))
 	addcCmd = new(addcontact.AddContact)
 	id := kademliaid.NewRandomKademliaID().String()
 	addcCmd.ParseOptions([]string{id, "127.0.0.1:1776"})

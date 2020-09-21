@@ -3,10 +3,8 @@ package initnode
 import (
 	"errors"
 	"kademlia/internal/address"
-	"kademlia/internal/contact"
-	"kademlia/internal/kademliaid"
+	"kademlia/internal/globals"
 	"kademlia/internal/node"
-	"kademlia/internal/routingtable"
 
 	"github.com/rs/zerolog/log"
 )
@@ -21,15 +19,10 @@ func (i *InitNode) Execute() (string, error) {
 	log.Debug().Msg("Executing init command")
 	log.Info().Msg("Initializing node...")
 
-	id := kademliaid.NewRandomKademliaID()
 	adr := address.New(i.Address)
-	me := contact.NewContact(id, &adr)
-	node.KadNode = node.Node{
-		Id:           id,
-		RoutingTable: routingtable.NewRoutingTable(me),
-	}
+	node.KadNode.Init(adr)
 
-	log.Info().Str("NodeID", id.String()).Msg("ID assigned")
+	log.Info().Str("NodeID", globals.ID.String()).Msg("ID assigned")
 
 	return "Node initialized", nil
 }

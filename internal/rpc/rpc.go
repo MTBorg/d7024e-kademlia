@@ -3,10 +3,11 @@ package rpc
 import (
 	"errors"
 	"fmt"
-	"kademlia/internal/address"
-	"kademlia/internal/kademliaid"
-	"kademlia/internal/node"
 	"strings"
+
+	"kademlia/internal/address"
+	"kademlia/internal/globals"
+	"kademlia/internal/kademliaid"
 
 	"github.com/rs/zerolog/log"
 )
@@ -23,7 +24,20 @@ type Sender interface {
 }
 
 func New(content string, target *address.Address) RPC {
-	return RPC{SenderId: node.KadNode.Id, RPCId: kademliaid.NewRandomKademliaID(), Content: content, Target: target}
+	return RPC{SenderId: globals.ID, RPCId: kademliaid.NewRandomKademliaID(), Content: content, Target: target}
+}
+
+// Constructs a new RPC with a given rpcID.
+//
+// Useful for creating new RPC's that are responses to previous RPCs, and thus
+// should use the same RPCId.
+func NewWithID(content string, target *address.Address, rpcId *kademliaid.KademliaID) RPC {
+	return RPC{
+		SenderId: globals.ID,
+		RPCId:    rpcId,
+		Content:  content,
+		Target:   target,
+	}
 }
 
 // Sends the message using the send function

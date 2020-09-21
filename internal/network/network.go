@@ -2,12 +2,14 @@ package network
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
+
 	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
+
+	"github.com/rs/zerolog/log"
 )
 
 var Net Network
@@ -45,8 +47,12 @@ func (network *Network) SendFindContactMessage(contact *contact.Contact) {
 	// TODO
 }
 
-func (network *Network) SendFindDataMessage(hash string) {
-	// TODO
+func (network *Network) SendFindDataMessage(rpc rpc.RPC) {
+	//TODO
+}
+
+func (network *Network) SendFindDataRespMessage(target *address.Address, rpcId *kademliaid.KademliaID) {
+	//TODO
 }
 
 func (network *Network) SendStoreMessage(target *address.Address, data []byte) {

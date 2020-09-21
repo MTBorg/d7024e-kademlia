@@ -1,6 +1,7 @@
 package node_test
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/node"
 	"testing"
 
@@ -8,9 +9,9 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	node.KadNode.Init("address")
+	addr := address.New("address")
+	node.KadNode.Init(addr)
 
 	// should initialize the node variables
-	assert.NotNil(t, node.KadNode.Id)
 	assert.NotNil(t, node.KadNode.RoutingTable)
 }

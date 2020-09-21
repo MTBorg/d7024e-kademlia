@@ -2,8 +2,8 @@ package getid_test
 
 import (
 	"kademlia/internal/commands/getid"
+	"kademlia/internal/globals"
 	"kademlia/internal/kademliaid"
-	"kademlia/internal/node"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ func TestExecute(t *testing.T) {
 
 	// should return the nodes ID
 	id := kademliaid.NewRandomKademliaID()
-	node.KadNode.Id = id
+	globals.ID = id
 	getidCmd = new(getid.GetId)
 	res, err := getidCmd.Execute()
 	assert.Nil(t, err)

@@ -1,7 +1,7 @@
 package getid
 
 import (
-	"kademlia/internal/node"
+	"kademlia/internal/globals"
 
 	"github.com/rs/zerolog/log"
 )
@@ -12,7 +12,7 @@ type GetId struct {
 // getid returns the nodes kademlia ID
 func (g GetId) Execute() (string, error) {
 	log.Debug().Msg("Executing getid command")
-	return node.KadNode.Id.String(), nil
+	return globals.ID.String(), nil
 }
 
 func (g *GetId) ParseOptions(options []string) error {
