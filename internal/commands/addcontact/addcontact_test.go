@@ -1,6 +1,7 @@
 package addcontact_test
 
 import (
+	// "fmt"
 	"kademlia/internal/commands/addcontact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
@@ -39,10 +40,11 @@ func TestExecute(t *testing.T) {
 	var addcCmd *addcontact.AddContact
 
 	// should add the contact
-	node.KadNode.Init("address")
+	node.KadNode.Init("127.0.0.1:1776")
 	addcCmd = new(addcontact.AddContact)
-	addcCmd.ParseOptions([]string{"address", kademliaid.NewRandomKademliaID().String()})
+	id := kademliaid.NewRandomKademliaID().String()
+	addcCmd.ParseOptions([]string{id, "127.0.0.1:1776"})
 	res, err := addcCmd.Execute()
-	assert.Equal(t, "Contact added", res)
+	assert.Equal(t, "Contact added: 127.0.0.1:1776", res)
 	assert.Nil(t, err)
 }

@@ -2,6 +2,7 @@ package initnode
 
 import (
 	"errors"
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
@@ -21,7 +22,8 @@ func (i *InitNode) Execute() (string, error) {
 	log.Info().Msg("Initializing node...")
 
 	id := kademliaid.NewRandomKademliaID()
-	me := contact.NewContact(id, i.Address)
+	adr := address.New(i.Address)
+	me := contact.NewContact(id, &adr)
 	node.KadNode = node.Node{
 		Id:           id,
 		RoutingTable: routingtable.NewRoutingTable(me),

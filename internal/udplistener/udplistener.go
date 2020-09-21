@@ -1,6 +1,7 @@
 package udplistener
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/node"
 	"kademlia/internal/rpc"
@@ -32,6 +33,7 @@ func waitForMessages(c *net.UDPConn) {
 			continue
 		}
 		data := buf[0:nr]
+		adr := address.New(addr.String())
 		rpcMsg, err := rpc.Deserialize(string(data))
 		if err == nil {
 			log.Info().
@@ -40,7 +42,7 @@ func waitForMessages(c *net.UDPConn) {
 				Str("RPCId", rpcMsg.RPCId.String()).
 				Msg("Received message")
 
-			c := contact.NewContact(rpcMsg.SenderId, addr.String())
+			c := contact.NewContact(rpcMsg.SenderId, &adr)
 			node.KadNode.RoutingTable.AddContact(c)
 
 			cmd, err := rpcparser.ParseRPC(&c, &rpcMsg)
@@ -58,7 +60,7 @@ func waitForMessages(c *net.UDPConn) {
 					Msg("Failed to parse RPC options")
 			}
 
-			log.Debug().Str("Id", c.ID.String()).Str("Address", c.Address).Msg("Updating bucket")
+			log.Debug().Str("Id", c.ID.String()).Str("Address", c.Address.String()).Msg("Updating bucket")
 		} else {
 			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message")
 		}

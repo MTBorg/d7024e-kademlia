@@ -1,6 +1,7 @@
 package ping_test
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpccommands/ping"
 	"testing"
@@ -9,8 +10,8 @@ import (
 )
 
 func TestParseOptions(t *testing.T) {
-	address := "someaddress"
-	p := ping.New(&address, kademliaid.NewRandomKademliaID())
+	adr := address.New("127.0.0.1:1776")
+	p := ping.New(&adr, kademliaid.NewRandomKademliaID())
 	options := []string{"hello", "abc"}
 	//Should never return an error
 	assert.NoError(t, p.ParseOptions(&options))

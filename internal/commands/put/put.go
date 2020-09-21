@@ -2,7 +2,6 @@ package put
 
 import (
 	"errors"
-	"fmt"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/network"
 	"kademlia/internal/node"
@@ -25,7 +24,7 @@ func (put *Put) Execute() (string, error) {
 
 	// Send STORE RPCs
 	for _, node := range closestNodes {
-		network.Net.SendStoreMessage(fmt.Sprintf("%s:%s", node.Address, "1776"), []byte(put.fileContent))
+		network.Net.SendStoreMessage(node.Address, []byte(put.fileContent))
 	}
 
 	return "", nil

@@ -2,7 +2,8 @@ package contact
 
 import (
 	"fmt"
-	. "kademlia/internal/kademliaid"
+	"kademlia/internal/address"
+	"kademlia/internal/kademliaid"
 	"sort"
 )
 
@@ -13,19 +14,19 @@ func Myprint() {
 // Contact definition
 // stores the KademliaID, the ip address and the distance
 type Contact struct {
-	ID       *KademliaID
-	Address  string
-	distance *KademliaID
+	ID       *kademliaid.KademliaID
+	Address  *address.Address
+	distance *kademliaid.KademliaID
 }
 
 // NewContact returns a new instance of a Contact
-func NewContact(id *KademliaID, address string) Contact {
+func NewContact(id *kademliaid.KademliaID, address *address.Address) Contact {
 	return Contact{id, address, nil}
 }
 
 // CalcDistance calculates the distance to the target and
 // fills the contacts distance field
-func (contact *Contact) CalcDistance(target *KademliaID) {
+func (contact *Contact) CalcDistance(target *kademliaid.KademliaID) {
 	contact.distance = contact.ID.CalcDistance(target)
 }
 
@@ -36,7 +37,7 @@ func (contact *Contact) Less(otherContact *Contact) bool {
 
 // String returns a simple string representation of a Contact
 func (contact *Contact) String() string {
-	return fmt.Sprintf(`contact("%s", "%s")`, contact.ID, contact.Address)
+	return fmt.Sprintf(`contact("%s", "%s")`, contact.ID, contact.Address.String())
 }
 
 // ContactCandidates definition

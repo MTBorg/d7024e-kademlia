@@ -2,6 +2,8 @@ package addcontact
 
 import (
 	"errors"
+	"fmt"
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
@@ -16,8 +18,9 @@ type AddContact struct {
 
 func (a *AddContact) Execute() (string, error) {
 	log.Debug().Msg("Executing addcontact command")
-	node.KadNode.RoutingTable.AddContact(contact.NewContact(kademliaid.FromString(a.Id), a.Address))
-	return "Contact added", nil
+	adr := address.New(a.Address)
+	node.KadNode.RoutingTable.AddContact(contact.NewContact(kademliaid.FromString(a.Id), &adr))
+	return "Contact added: " + fmt.Sprint(adr.String()), nil
 }
 
 func (a *AddContact) ParseOptions(options []string) error {

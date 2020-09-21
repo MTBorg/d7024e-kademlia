@@ -1,6 +1,7 @@
 package node
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
@@ -18,11 +19,12 @@ var KadNode Node
 
 // Initialize the node by generating a NodeID and creating a new routing table
 // containing itself as a contact
-func (node *Node) Init(address string) {
+func (node *Node) Init(target string) {
 	id := kademliaid.NewRandomKademliaID()
+	adr := address.New(target)
 	KadNode = Node{
 		Id:           id,
-		RoutingTable: routingtable.NewRoutingTable(contact.NewContact(id, address)),
+		RoutingTable: routingtable.NewRoutingTable(contact.NewContact(id, &adr)),
 	}
 }
 

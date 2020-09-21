@@ -1,6 +1,7 @@
 package rpcparser_test
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
@@ -15,7 +16,8 @@ import (
 )
 
 func TestParseRPC(t *testing.T) {
-	c := contact.NewContact(kademliaid.NewRandomKademliaID(), "127.0.0.1")
+	adr := address.New("127.0.0.1:1776")
+	c := contact.NewContact(kademliaid.NewRandomKademliaID(), &adr)
 	var r rpc.RPC
 	var rpcCmd rpccommand.RPCCommand
 	var err error
