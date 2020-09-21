@@ -3,6 +3,7 @@ package rpc_test
 import (
 	"errors"
 	"fmt"
+	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
 	"strings"
@@ -23,9 +24,10 @@ func (m *SenderMock) Send(data string) error {
 
 func TestNew(t *testing.T) {
 	var content, target = "some message", "127.0.0.1:1337"
-	rpc := rpc.New(content, target)
+	adr := address.New(target)
+	rpc := rpc.New(content, &adr)
 
-	assert.Equal(t, rpc.Target, target)
+	assert.Equal(t, rpc.Target, &adr)
 	assert.Equal(t, rpc.Content, content)
 }
 
@@ -52,7 +54,8 @@ func TestDeserialize(t *testing.T) {
 func TestSend(t *testing.T) {
 	testId := strings.Repeat("1", 40) //IDs are 160-bit (= 40 hex characters)
 	var senderMock *SenderMock
-	rpc := rpc.RPC{SenderId: kademliaid.FromString(testId), RPCId: kademliaid.FromString(testId), Content: "content", Target: "target"}
+	adr := address.New("127.0.0.1")
+	rpc := rpc.RPC{SenderId: kademliaid.FromString(testId), RPCId: kademliaid.FromString(testId), Content: "content", Target: &adr}
 	rpcSerialized := fmt.Sprintf("%s;%s;content", testId, testId)
 	var err error
 

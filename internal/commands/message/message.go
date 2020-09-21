@@ -2,6 +2,7 @@ package message
 
 import (
 	"errors"
+	"kademlia/internal/address"
 	kademliaMessage "kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
 
@@ -15,9 +16,9 @@ type Message struct {
 
 func (msg Message) Execute() (string, error) {
 	log.Debug().Str("Target", msg.Target).Msg("Executing message command")
-
-	message := kademliaMessage.New(msg.Content, msg.Target)
-	udpSender := udpsender.New(msg.Target)
+	adr := address.New(msg.Target)
+	message := kademliaMessage.New(msg.Content, &adr)
+	udpSender := udpsender.New(&adr)
 	err := message.Send(udpSender)
 
 	if err != nil {

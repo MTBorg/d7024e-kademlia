@@ -23,31 +23,31 @@ func TestParseRPC(t *testing.T) {
 	var err error
 
 	//Should be able to parse a PING rpc
-	r = rpc.New("PING", "sometarget")
+	r = rpc.New("PING", &adr)
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.Nil(t, err)
 	assert.IsType(t, ping.Ping{}, rpcCmd)
 
 	//Should be able to parse a PONG rpc
-	r = rpc.New("PONG", "sometarget")
+	r = rpc.New("PONG", &adr)
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.Nil(t, err)
 	assert.IsType(t, pong.Pong{}, rpcCmd)
 
 	//Should be able to parse a STORE rpc
-	r = rpc.New("STORE", "sometarget")
+	r = rpc.New("STORE", &adr)
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.Nil(t, err)
 	assert.IsType(t, &store.Store{}, rpcCmd)
 
 	//Should not parse an unknown RPC
-	r = rpc.New("HELLO", "sometarget")
+	r = rpc.New("HELLO", &adr)
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.EqualError(t, err, "Received unknown RPC HELLO")
 	assert.Nil(t, rpcCmd)
 
 	//Should not parse empty string
-	r = rpc.New("", "sometarget")
+	r = rpc.New("", &adr)
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "Missing RPC name")
