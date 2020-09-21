@@ -3,6 +3,7 @@ package rpc
 import (
 	"errors"
 	"fmt"
+	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
 	"strings"
@@ -14,14 +15,14 @@ type RPC struct {
 	SenderId *kademliaid.KademliaID
 	RPCId    *kademliaid.KademliaID
 	Content  string
-	Target   string
+	Target   *address.Address
 }
 
 type Sender interface {
 	Send(string) error
 }
 
-func New(content string, target string) RPC {
+func New(content string, target *address.Address) RPC {
 	return RPC{SenderId: node.KadNode.Id, RPCId: kademliaid.NewRandomKademliaID(), Content: content, Target: target}
 }
 

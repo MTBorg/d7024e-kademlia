@@ -1,28 +1,24 @@
 package udpsender
 
 import (
-	"net"
-	"strconv"
-
 	"github.com/rs/zerolog/log"
+	"kademlia/internal/address"
+	"net"
 )
 
 type UDPSender struct {
 	target *net.UDPAddr
 }
 
-func New(target string) UDPSender {
-	host, port, err := net.SplitHostPort(target)
+func New(target *address.Address) UDPSender {
+
+	port, err := target.GetPortAsInt()
 	if err != nil {
-		log.Error().Str("Target", target).Msgf("Failed to parse given target address: %s", err)
-	}
-	iport, err := strconv.Atoi(port)
-	if err != nil {
-		log.Error().Str("Port", port).Msgf("Failed to parse given string port to int: %s", err)
+		log.Error().Str("Address", target.String()).Msgf("Failed to parse given string port to int: %s", err)
 	}
 	return UDPSender{target: &net.UDPAddr{
-		IP:   net.ParseIP(host),
-		Port: iport,
+		IP:   net.ParseIP(target.GetHost()),
+		Port: port,
 	}}
 }
 

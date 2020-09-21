@@ -4,6 +4,7 @@ import ()
 import (
 	// "github.com/rs/zerolog/log"
 	"net"
+	"strconv"
 )
 
 type Address struct {
@@ -27,4 +28,12 @@ func New(address string) Address {
 
 func (address *Address) String() string {
 	return net.JoinHostPort(address.host, address.port)
+}
+
+func (address *Address) GetHost() string {
+	return address.host
+}
+
+func (address *Address) GetPortAsInt() (int, error) {
+	return strconv.Atoi(address.port)
 }
