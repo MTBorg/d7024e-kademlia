@@ -21,10 +21,12 @@ func (get *Get) Execute(node *node.Node) (string, error) {
 		log.Debug().Str("Key", get.hash.String()).Msg("Value not found locally")
 
 		// TODO: Send FIND_NODE RPC
-
-		return "Key not found", nil
+		value = node.LookupData(&get.hash)
 	}
 
+	if value == "" {
+		return "", errors.New("Key not found")
+	}
 	return value, nil
 }
 

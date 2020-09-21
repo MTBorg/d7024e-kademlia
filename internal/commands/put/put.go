@@ -6,8 +6,6 @@ import (
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/network"
 	"kademlia/internal/node"
-	"os"
-	"strconv"
 	"strings"
 )
 
@@ -18,13 +16,9 @@ type Put struct {
 func (put *Put) Execute(node *node.Node) (string, error) {
 	log.Debug().Msg("Executing put command")
 
-	k, err := strconv.Atoi(os.Getenv("K"))
-	if err != nil {
-		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
-	}
-
 	key := kademliaid.NewKademliaID(&put.fileContent)
-	closestNodes := node.FindKClosest(&key, nil, k)
+	// closestNodes := node.FindKClosest(&key, nil, k)
+	closestNodes := node.LookupContact(&key)
 
 	node.Store(&put.fileContent)
 

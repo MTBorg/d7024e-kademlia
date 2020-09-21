@@ -65,12 +65,25 @@ func (network *Network) SendFindContactRespMessage(senderId *kademliaid.Kademlia
 	log.Info().Str("Address", target.String()).Str("Content", *content).Msg("FIND_NODE_RESPONSE sent to address")
 }
 
-func (network *Network) SendFindDataMessage(rpc rpc.RPC) {
-	//TODO
+func (network *Network) SendFindDataMessage(rpc *rpc.RPC) {
+	log.Debug().Str("Target", rpc.Target.String()).Msg("Sending FIND_VALUE RPC")
+	udpSender := udpsender.New(rpc.Target)
+	err := rpc.Send(udpSender)
+
+	if err != nil {
+		log.Error().Msgf("Failed to write RPC FIND_VALUE message to UDP: %s", err.Error())
+	}
 }
 
-func (network *Network) SendFindDataRespMessage(target *address.Address, rpcId *kademliaid.KademliaID) {
-	//TODO
+func (network *Network) SendFindDataRespMessage(senderID *kademliaid.KademliaID, target *address.Address, rpcId *kademliaid.KademliaID, content *string) {
+	log.Debug().Str("Target", target.String()).Str("Content", *content).Msg("Sending FIND_VALUE_RESP RPC")
+	rpc := rpc.NewWithID(senderID, fmt.Sprintf("FIND_VALUE_RESP %s", *content), target, rpcId)
+	udpSender := udpsender.New(target)
+	err := rpc.Send(udpSender)
+
+	if err != nil {
+		log.Error().Msgf("Failed to write RPC FIND_VALUE_RESP message to UDP: %s", err.Error())
+	}
 }
 
 func (network *Network) SendStoreMessage(senderId *kademliaid.KademliaID, target *address.Address, data []byte) {
@@ -81,6 +94,5 @@ func (network *Network) SendStoreMessage(senderId *kademliaid.KademliaID, target
 
 	if err != nil {
 		log.Error().Msgf("Failed to write RPC STORE message to UDP: %s", err.Error())
-		log.Info().Str("Address", target.String()).Str("Content", "STORE").Msg("Message sent to address")
 	}
 }

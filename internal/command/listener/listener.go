@@ -47,6 +47,11 @@ func respond(c net.Conn, node *node.Node) {
 			if err != nil {
 				log.Error().Msgf("Failed to write response: %s", err)
 			}
+		} else {
+			_, err = c.Write([]byte(err.Error()))
+			if err != nil {
+				log.Error().Msgf("Failed to write response: %s", err)
+			}
 		}
 	}
 
