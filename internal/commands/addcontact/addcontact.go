@@ -19,7 +19,7 @@ type AddContact struct {
 func (a *AddContact) Execute(node *node.Node) (string, error) {
 	log.Debug().Msg("Executing addcontact command")
 	adr := address.New(a.Address)
-	node.RoutingTable.AddContact(contact.NewContact(kademliaid.FromString(a.Id), &adr))
+	node.RoutingTable.AddContact(contact.NewContact(kademliaid.FromString(a.Id), adr))
 	return "Contact added: " + fmt.Sprint(adr.String()), nil
 }
 

@@ -26,9 +26,9 @@ func TestNew(t *testing.T) {
 	var content, target = "some message", "127.0.0.1:1337"
 	adr := address.New(target)
 	senderId := kademliaid.NewRandomKademliaID()
-	rpc := rpc.New(senderId, content, &adr)
+	rpc := rpc.New(senderId, content, adr)
 
-	assert.Equal(t, rpc.Target, &adr)
+	assert.Equal(t, rpc.Target, adr)
 	assert.Equal(t, rpc.Content, content)
 }
 
@@ -56,7 +56,7 @@ func TestSend(t *testing.T) {
 	testId := strings.Repeat("1", 40) //IDs are 160-bit (= 40 hex characters)
 	var senderMock *SenderMock
 	adr := address.New("127.0.0.1")
-	rpc := rpc.RPC{SenderId: kademliaid.FromString(testId), RPCId: kademliaid.FromString(testId), Content: "content", Target: &adr}
+	rpc := rpc.RPC{SenderId: kademliaid.FromString(testId), RPCId: kademliaid.FromString(testId), Content: "content", Target: adr}
 	rpcSerialized := fmt.Sprintf("%s;%s;content", testId, testId)
 	var err error
 

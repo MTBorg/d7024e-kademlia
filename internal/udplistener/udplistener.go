@@ -42,7 +42,7 @@ func waitForMessages(c *net.UDPConn, node *node.Node) {
 				Str("RPCId", rpcMsg.RPCId.String()).
 				Msg("Received message")
 
-			c := contact.NewContact(rpcMsg.SenderId, &adr)
+			c := contact.NewContact(rpcMsg.SenderId, adr)
 			node.RoutingTable.AddContact(c)
 
 			cmd, err := rpcparser.ParseRPC(&c, &rpcMsg)
