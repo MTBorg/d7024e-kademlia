@@ -2,12 +2,13 @@ package put
 
 import (
 	"errors"
+	"github.com/rs/zerolog/log"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/network"
 	"kademlia/internal/node"
+	"os"
+	"strconv"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 type Put struct {
@@ -17,7 +18,10 @@ type Put struct {
 func (put *Put) Execute(node *node.Node) (string, error) {
 
 	log.Debug().Msg("Executing put command")
-	k := 20 //TODO: Use constant
+	k, err := strconv.Atoi(os.Getenv("K"))
+	if err != nil {
+		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
+	}
 	key := kademliaid.NewKademliaID(&put.fileContent)
 	closestNodes := node.RoutingTable.FindClosestContacts(&key, k)
 

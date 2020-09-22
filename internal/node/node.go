@@ -16,11 +16,6 @@ type Node struct {
 	nodedata.NodeData
 }
 
-// Config variables
-// TODO: set in env
-const alpha int = 3 // degree of parallellism
-const k int = 5     // k-closest (not size of k-bucket!)
-
 // Initialize the node by generating a NodeID and creating a new routing table
 // containing itself as a contact
 func (node *Node) Init(address address.Address) {
