@@ -2,8 +2,8 @@ package get
 
 import (
 	"errors"
-	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/node"
 
 	"github.com/rs/zerolog/log"
 )
@@ -12,11 +12,11 @@ type Get struct {
 	hash kademliaid.KademliaID
 }
 
-func (get *Get) Execute() (string, error) {
+func (get *Get) Execute(node *node.Node) (string, error) {
 	log.Debug().Msg("Executing get command")
 
 	// Check local storage
-	value := datastore.Store.Get(get.hash)
+	value := node.DataStore.Get(get.hash)
 	if value == "" {
 		log.Debug().Str("Key", get.hash.String()).Msg("Value not found locally")
 

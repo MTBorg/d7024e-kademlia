@@ -41,11 +41,12 @@ func TestExecute(t *testing.T) {
 	var addcCmd *addcontact.AddContact
 
 	// should add the contact
-	node.KadNode.Init(address.New("127.0.0.1:1776"))
+	node := node.Node{}
+	node.Init(address.New("127.0.0.1:1776"))
 	addcCmd = new(addcontact.AddContact)
 	id := kademliaid.NewRandomKademliaID().String()
 	addcCmd.ParseOptions([]string{id, "127.0.0.1:1776"})
-	res, err := addcCmd.Execute()
+	res, err := addcCmd.Execute(&node)
 	assert.Equal(t, "Contact added: 127.0.0.1:1776", res)
 	assert.Nil(t, err)
 }

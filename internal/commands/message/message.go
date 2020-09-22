@@ -3,6 +3,7 @@ package message
 import (
 	"errors"
 	"kademlia/internal/address"
+	"kademlia/internal/node"
 	kademliaMessage "kademlia/internal/rpc"
 	"kademlia/internal/udpsender"
 
@@ -14,10 +15,10 @@ type Message struct {
 	Content string
 }
 
-func (msg Message) Execute() (string, error) {
+func (msg Message) Execute(node *node.Node) (string, error) {
 	log.Debug().Str("Target", msg.Target).Msg("Executing message command")
 	adr := address.New(msg.Target)
-	message := kademliaMessage.New(msg.Content, &adr)
+	message := kademliaMessage.New(node.ID, msg.Content, &adr)
 	udpSender := udpsender.New(&adr)
 	err := message.Send(udpSender)
 

@@ -2,6 +2,7 @@ package getcontacts_test
 
 import (
 	"kademlia/internal/commands/getcontacts"
+	"kademlia/internal/node"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,8 +21,8 @@ func TestExecute(t *testing.T) {
 	var getcsCmd *getcontacts.GetContacts
 
 	// should return message informing that the routingtable is empty
-	res, err := getcsCmd.Execute()
+	node := node.Node{}
+	res, err := getcsCmd.Execute(&node)
 	assert.Equal(t, "Empty! Please, populate the routingtable...", res)
 	assert.Nil(t, err)
-
 }

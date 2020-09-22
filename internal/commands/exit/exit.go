@@ -1,14 +1,16 @@
 package exit
 
 import (
-	"github.com/rs/zerolog/log"
+	"kademlia/internal/node"
 	"os"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Exit struct {
 }
 
-func (e Exit) Execute() (string, error) {
+func (e Exit) Execute(node *node.Node) (string, error) {
 	log.Debug().Msg("Executing exit command")
 	log.Info().Msg("Node exiting...")
 	os.Exit(0)

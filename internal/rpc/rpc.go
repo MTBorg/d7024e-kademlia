@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"kademlia/internal/address"
-	"kademlia/internal/globals"
 	"kademlia/internal/kademliaid"
 
 	"github.com/rs/zerolog/log"
@@ -23,17 +22,17 @@ type Sender interface {
 	Send(string) error
 }
 
-func New(content string, target *address.Address) RPC {
-	return RPC{SenderId: globals.ID, RPCId: kademliaid.NewRandomKademliaID(), Content: content, Target: target}
+func New(senderId *kademliaid.KademliaID, content string, target *address.Address) RPC {
+	return RPC{SenderId: senderId, RPCId: kademliaid.NewRandomKademliaID(), Content: content, Target: target}
 }
 
 // Constructs a new RPC with a given rpcID.
 //
 // Useful for creating new RPC's that are responses to previous RPCs, and thus
 // should use the same RPCId.
-func NewWithID(content string, target *address.Address, rpcId *kademliaid.KademliaID) RPC {
+func NewWithID(senderId *kademliaid.KademliaID, content string, target *address.Address, rpcId *kademliaid.KademliaID) RPC {
 	return RPC{
-		SenderId: globals.ID,
+		SenderId: senderId,
 		RPCId:    rpcId,
 		Content:  content,
 		Target:   target,

@@ -1,10 +1,12 @@
 package cmdlistener
 
 import (
-	"github.com/rs/zerolog/log"
 	"kademlia/internal/command/parser"
+	"kademlia/internal/node"
 	"net"
 	"os"
+
+	"github.com/rs/zerolog/log"
 )
 
 // Clears the socket at socketAddress
@@ -21,7 +23,7 @@ func ClearSocket(socketAddress string) {
 	}
 }
 
-func respond(c net.Conn) {
+func respond(c net.Conn, node *node.Node) {
 	buf := make([]byte, 512)
 	nr, err := c.Read(buf)
 	if err != nil {
@@ -36,7 +38,7 @@ func respond(c net.Conn) {
 	// Execute command
 	var executionResult string
 	if command != nil {
-		executionResult, err = command.Execute()
+		executionResult, err = command.Execute(node)
 
 		// Write response
 		if err == nil {
@@ -51,7 +53,7 @@ func respond(c net.Conn) {
 	c.Close()
 }
 
-func Listen() {
+func Listen(node *node.Node) {
 	const socketAddress = "/tmp/echo.sock"
 
 	ClearSocket(socketAddress)
@@ -67,7 +69,7 @@ func Listen() {
 		c, err := l.Accept()
 		if err == nil {
 			log.Info().Str("Address", socketAddress).Msg("Received message from socket")
-			go respond(c)
+			go respond(c, node)
 		} else {
 			log.Error().Msgf("Listener failed to accept: %s", err)
 		}

@@ -14,17 +14,18 @@ type Put struct {
 	fileContent string
 }
 
-func (put *Put) Execute() (string, error) {
+func (put *Put) Execute(node *node.Node) (string, error) {
+
 	log.Debug().Msg("Executing put command")
 	k := 20 //TODO: Use constant
 	key := kademliaid.NewKademliaID(&put.fileContent)
-	closestNodes := node.KadNode.RoutingTable.FindClosestContacts(&key, k)
+	closestNodes := node.RoutingTable.FindClosestContacts(&key, k)
 
-	node.KadNode.Store(&put.fileContent)
+	node.Store(&put.fileContent)
 
 	// Send STORE RPCs
 	for _, node := range closestNodes {
-		network.Net.SendStoreMessage(node.Address, []byte(put.fileContent))
+		network.Net.SendStoreMessage(node.ID, node.Address, []byte(put.fileContent))
 	}
 
 	return "", nil

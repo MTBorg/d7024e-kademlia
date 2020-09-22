@@ -10,8 +10,8 @@ type Store struct {
 	fileContent string
 }
 
-func (store *Store) Execute() {
-	node.KadNode.Store(&store.fileContent)
+func (store *Store) Execute(node *node.Node) {
+	node.Store(&store.fileContent)
 }
 
 func (store *Store) ParseOptions(options *[]string) error {

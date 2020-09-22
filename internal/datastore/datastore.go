@@ -52,5 +52,3 @@ func (d *DataStore) EntriesAsString() string {
 	}
 	return s
 }
-
-var Store = New()

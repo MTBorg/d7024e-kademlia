@@ -17,10 +17,10 @@ var Net Network
 type Network struct{}
 
 // SendPongMessage replies a "PONG" message to the remote "pinger" address
-func (network *Network) SendPongMessage(target *address.Address, id *kademliaid.KademliaID) {
+func (network *Network) SendPongMessage(senderId *kademliaid.KademliaID, target *address.Address, id *kademliaid.KademliaID) {
 
 	log.Debug().Str("Address", target.String()).Msg("Sending PONG to address")
-	rpc := rpc.New("PONG", target)
+	rpc := rpc.New(senderId, "PONG", target)
 	rpc.RPCId = id
 	udpSender := udpsender.New(target)
 
@@ -32,8 +32,8 @@ func (network *Network) SendPongMessage(target *address.Address, id *kademliaid.
 }
 
 // SendPingMessage sends a "PING" message to a remote address
-func (network *Network) SendPingMessage(target *address.Address) {
-	rpc := rpc.New("PING", target)
+func (network *Network) SendPingMessage(senderId *kademliaid.KademliaID, target *address.Address) {
+	rpc := rpc.New(senderId, "PING", target)
 	udpSender := udpsender.New(target)
 
 	err := rpc.Send(udpSender)
@@ -55,9 +55,9 @@ func (network *Network) SendFindDataRespMessage(target *address.Address, rpcId *
 	//TODO
 }
 
-func (network *Network) SendStoreMessage(target *address.Address, data []byte) {
+func (network *Network) SendStoreMessage(senderId *kademliaid.KademliaID, target *address.Address, data []byte) {
 	log.Debug().Str("Target", target.String()).Msg("Sending store message")
-	rpc := rpc.New(fmt.Sprintf("%s %s", "STORE", data), target)
+	rpc := rpc.New(senderId, fmt.Sprintf("%s %s", "STORE", data), target)
 	udpSender := udpsender.New(target)
 	err := rpc.Send(udpSender)
 

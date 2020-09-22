@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kademlia/internal/address"
 	"kademlia/internal/network"
+	"kademlia/internal/node"
 
 	"github.com/rs/zerolog/log"
 )
@@ -12,10 +13,10 @@ type Ping struct {
 	Target string
 }
 
-func (p Ping) Execute() (string, error) {
+func (p Ping) Execute(node *node.Node) (string, error) {
 	log.Debug().Str("Target", p.Target).Msg("Executing ping command")
 	adr := address.New(p.Target)
-	network.Net.SendPingMessage(&adr)
+	network.Net.SendPingMessage(node.ID, &adr)
 
 	return "Ping sent!", nil
 

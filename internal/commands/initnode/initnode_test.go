@@ -1,8 +1,10 @@
 package initnode_test
 
 import (
-	"kademlia/internal/commands/initnode"
 	"testing"
+
+	"kademlia/internal/commands/initnode"
+	"kademlia/internal/node"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +35,8 @@ func TestExecute(t *testing.T) {
 	// should initialize the node
 	initCmd = new(initnode.InitNode)
 	initCmd.ParseOptions([]string{"address"})
-	res, err := initCmd.Execute()
+	node := node.Node{}
+	res, err := initCmd.Execute(&node)
 	assert.Equal(t, "Node initialized", res)
 	assert.Nil(t, err)
 }

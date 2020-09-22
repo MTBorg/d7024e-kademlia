@@ -3,6 +3,7 @@ package main
 import (
 	"kademlia/internal/command/listener"
 	"kademlia/internal/logger"
+	"kademlia/internal/node"
 	"kademlia/internal/udplistener"
 	"net"
 	"os"
@@ -36,6 +37,8 @@ func main() {
 	}
 	log.Info().Str("Hostname", host).Str("IP", ip).Msg("Starting node...")
 
-	go cmdlistener.Listen()
-	udplistener.Listen(ip, 1776)
+	node := node.Node{}
+
+	go cmdlistener.Listen(&node)
+	udplistener.Listen(ip, 1776, &node)
 }

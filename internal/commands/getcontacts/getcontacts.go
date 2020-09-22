@@ -7,9 +7,9 @@ import (
 
 type GetContacts struct{}
 
-func (g *GetContacts) Execute() (string, error) {
+func (g *GetContacts) Execute(node *node.Node) (string, error) {
 	log.Debug().Msg("Executing getcontacts command")
-	return node.KadNode.RoutingTable.GetContacts(), nil
+	return node.RoutingTable.GetContacts(), nil
 }
 
 func (g *GetContacts) ParseOptions(options []string) error {

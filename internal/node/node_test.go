@@ -9,9 +9,10 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	addr := address.New("address")
-	node.KadNode.Init(addr)
+	node := node.Node{}
+	adr := address.New("address")
+	node.Init(adr)
 
 	// should initialize the node variables
-	assert.NotNil(t, node.KadNode.RoutingTable)
+	assert.NotNil(t, node.RoutingTable)
 }
