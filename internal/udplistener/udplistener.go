@@ -13,7 +13,7 @@ import (
 )
 
 // Listen initiates a UDP server
-func Listen(ip string, port int) {
+func Listen(ip string, port int, node *node.Node) {
 	addr := net.UDPAddr{IP: net.ParseIP(ip), Port: port}
 	ln, err := net.ListenUDP("udp4", &addr)
 	defer ln.Close()
@@ -22,10 +22,10 @@ func Listen(ip string, port int) {
 	}
 	log.Info().Str("Address", addr.String()).Msg("Listening on UDP packets on address")
 
-	waitForMessages(ln)
+	waitForMessages(ln, node)
 }
 
-func waitForMessages(c *net.UDPConn) {
+func waitForMessages(c *net.UDPConn, node *node.Node) {
 	for {
 		buf := make([]byte, 512)
 		nr, addr, err := c.ReadFromUDP(buf)
@@ -43,7 +43,7 @@ func waitForMessages(c *net.UDPConn) {
 				Msg("Received message")
 
 			c := contact.NewContact(rpcMsg.SenderId, &adr)
-			node.KadNode.RoutingTable.AddContact(c)
+			node.RoutingTable.AddContact(c)
 
 			cmd, err := rpcparser.ParseRPC(&c, &rpcMsg)
 			if err != nil {
@@ -53,7 +53,7 @@ func waitForMessages(c *net.UDPConn) {
 
 			options := strings.Split(rpcMsg.Content, " ")[1:]
 			if err = cmd.ParseOptions(&options); err == nil {
-				cmd.Execute()
+				cmd.Execute(node)
 			} else {
 				log.Warn().
 					Str("Error", err.Error()).

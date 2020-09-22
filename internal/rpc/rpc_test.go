@@ -25,7 +25,8 @@ func (m *SenderMock) Send(data string) error {
 func TestNew(t *testing.T) {
 	var content, target = "some message", "127.0.0.1:1337"
 	adr := address.New(target)
-	rpc := rpc.New(content, &adr)
+	senderId := kademliaid.NewRandomKademliaID()
+	rpc := rpc.New(senderId, content, &adr)
 
 	assert.Equal(t, rpc.Target, &adr)
 	assert.Equal(t, rpc.Content, content)

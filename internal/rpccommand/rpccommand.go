@@ -1,6 +1,10 @@
 package rpccommand
 
+import (
+	"kademlia/internal/node"
+)
+
 type RPCCommand interface {
-	Execute()
+	Execute(node *node.Node)
 	ParseOptions(options *[]string) error
 }

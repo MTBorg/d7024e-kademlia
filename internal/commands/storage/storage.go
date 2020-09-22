@@ -1,17 +1,17 @@
 package storage
 
 import (
-	"kademlia/internal/datastore"
+	"kademlia/internal/node"
 
 	"github.com/rs/zerolog/log"
 )
 
 type Storage struct{}
 
-func (d Storage) Execute() (string, error) {
+func (d Storage) Execute(node *node.Node) (string, error) {
 	log.Debug().Msg("Executing storage command")
 
-	result := datastore.Store.EntriesAsString()
+	result := node.DataStore.EntriesAsString()
 
 	return result, nil
 }

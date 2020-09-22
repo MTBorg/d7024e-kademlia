@@ -1,8 +1,9 @@
 package store_test
 
 import (
-	"kademlia/internal/datastore"
+	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/node"
 	"kademlia/internal/rpccommands/store"
 	"reflect"
 	"testing"
@@ -20,8 +21,10 @@ func TestExecute(t *testing.T) {
 	fileContent := "this is some file content"
 	err = s.ParseOptions(&options)
 	assert.NoError(t, err)
-	s.Execute()
-	assert.Equal(t, fileContent, datastore.Store.Get(kademliaid.NewKademliaID(&fileContent)))
+	node := node.Node{}
+	node.Init(address.New(""))
+	s.Execute(&node)
+	assert.Equal(t, fileContent, node.DataStore.Get(kademliaid.NewKademliaID(&fileContent)))
 }
 
 func TestParseOptions(t *testing.T) {
