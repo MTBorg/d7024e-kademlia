@@ -1,8 +1,7 @@
 package address
 
-import ()
 import (
-	// "github.com/rs/zerolog/log"
+	"github.com/rs/zerolog/log"
 	"net"
 	"strconv"
 )
@@ -12,15 +11,16 @@ type Address struct {
 	port string
 }
 
-func New(address string) Address {
-	host, _, err := net.SplitHostPort(address)
+func New(address string) *Address {
+	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		host = address // TODO: This is dumb, need to check if error is of "missing address port"
-		// log.Error().Str("Address", host).Msgf("Failed to parse given address, error: %s", err)
-
+		if port == "" { // Assume address is correct if port is missing
+			host = address
+		} else {
+			log.Error().Str("Address", address).Msgf("Failed to parse given address, error: %s", err)
+		}
 	}
-
-	return Address{
+	return &Address{
 		host: host,
 		port: "1776", // TODO: Don't hardcore, maybe use env var?
 	}

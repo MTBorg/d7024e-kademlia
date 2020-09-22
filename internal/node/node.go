@@ -18,9 +18,9 @@ type Node struct {
 
 // Initialize the node by generating a NodeID and creating a new routing table
 // containing itself as a contact
-func (node *Node) Init(address address.Address) {
+func (node *Node) Init(address *address.Address) {
 	id := kademliaid.NewRandomKademliaID()
-	me := contact.NewContact(id, &address)
+	me := contact.NewContact(id, address)
 	*node = Node{
 		NodeData: nodedata.NodeData{
 			RoutingTable: routingtable.NewRoutingTable(me),
