@@ -24,7 +24,7 @@ services:
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - K=20
-      - alpha=3
+      - ALPHA=3
       
 networks:
   kademlia_dev_network:
