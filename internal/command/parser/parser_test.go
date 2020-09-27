@@ -33,6 +33,10 @@ func TestParseCmd(t *testing.T) {
 	cmd = cmdparser.ParseCmd("exit")
 	assert.NotNil(t, cmd)
 
+	// should be able to parse a storage command
+	cmd = cmdparser.ParseCmd("storage")
+	assert.NotNil(t, cmd)
+
 	// should be able to parse a getid command
 	cmd = cmdparser.ParseCmd("getid")
 	assert.NotNil(t, cmd)
@@ -42,10 +46,18 @@ func TestParseCmd(t *testing.T) {
 	cmd = cmdparser.ParseCmd("addcontact nodeid address")
 	assert.NotNil(t, cmd)
 
+	// should be able to parse a getcontacts command
+	cmd = cmdparser.ParseCmd("getcontacts")
+	assert.NotNil(t, cmd)
+
 	// should be able to parse a init command
 	// TODO: Should also test that address is set
 	cmd = cmdparser.ParseCmd("init address")
 	assert.NotNil(t, cmd)
+
+	// should be able to parse a put command
+	cmd = cmdparser.ParseCmd("put")
+	assert.Nil(t, cmd)
 
 	//should return nil if an invalid command was passed
 	cmd = cmdparser.ParseCmd("non-existent command")

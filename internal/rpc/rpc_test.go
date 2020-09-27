@@ -31,6 +31,17 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, rpc.Target, adr)
 	assert.Equal(t, rpc.Content, content)
 }
+func TestNewWithID(t *testing.T) {
+	senderid := kademliaid.NewRandomKademliaID()
+	rpcid := kademliaid.NewRandomKademliaID()
+	adr := address.New("127.0.0.1")
+	rpc := rpc.NewWithID(senderid, "TEST", adr, rpcid)
+	assert.NotNil(t, rpc)
+	assert.Equal(t, senderid, rpc.SenderId)
+	assert.Equal(t, rpcid, rpc.RPCId)
+	assert.Equal(t, adr, rpc.Target)
+	assert.Equal(t, "TEST", rpc.Content)
+}
 
 func TestDeserialize(t *testing.T) {
 	var r rpc.RPC

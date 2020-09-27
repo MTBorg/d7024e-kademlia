@@ -1,7 +1,6 @@
 package address
 
 import (
-	"github.com/rs/zerolog/log"
 	"net"
 	"strconv"
 )
@@ -16,8 +15,6 @@ func New(address string) *Address {
 	if err != nil {
 		if port == "" { // Assume address is correct if port is missing
 			host = address
-		} else {
-			log.Error().Str("Address", address).Msgf("Failed to parse given address, error: %s", err)
 		}
 	}
 	return &Address{
