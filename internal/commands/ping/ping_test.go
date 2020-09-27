@@ -2,10 +2,20 @@ package ping_test
 
 import (
 	"kademlia/internal/commands/ping"
+	"kademlia/internal/node"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestExecute(t *testing.T) {
+	// should return a string and not an error
+	node := &node.Node{}
+	ping := ping.Ping{}
+	resp, err := ping.Execute(node)
+	assert.Nil(t, err)
+	assert.Equal(t, "Ping sent!", resp)
+}
 
 func TestParseOptions(t *testing.T) {
 	var pingCmd *ping.Ping

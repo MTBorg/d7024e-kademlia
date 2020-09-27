@@ -29,7 +29,7 @@ func NewRoutingTable(me contact.Contact) *RoutingTable {
 // AddContact add a new contact to the correct Bucket
 func (routingTable *RoutingTable) AddContact(contact contact.Contact) {
 	if contact.ID.Equals(routingTable.me.ID) != true {
-		bucketIndex := routingTable.getBucketIndex(contact.ID)
+		bucketIndex := routingTable.GetBucketIndex(contact.ID)
 		bucket := routingTable.buckets[bucketIndex]
 		bucket.AddContact(contact)
 	}
@@ -39,7 +39,7 @@ func (routingTable *RoutingTable) AddContact(contact contact.Contact) {
 // FindClosestContacts finds the count closest Contacts to the target in the RoutingTable
 func (routingTable *RoutingTable) FindClosestContacts(target *kademliaid.KademliaID, count int) []contact.Contact {
 	var candidates contact.ContactCandidates
-	bucketIndex := routingTable.getBucketIndex(target)
+	bucketIndex := routingTable.GetBucketIndex(target)
 	bucket := routingTable.buckets[bucketIndex]
 
 	candidates.Append(bucket.GetContactAndCalcDistance(target))
@@ -82,7 +82,7 @@ func (routingTable *RoutingTable) GetContacts() string {
 }
 
 // getBucketIndex get the correct Bucket index for the KademliaID
-func (routingTable *RoutingTable) getBucketIndex(id *kademliaid.KademliaID) int {
+func (routingTable *RoutingTable) GetBucketIndex(id *kademliaid.KademliaID) int {
 	distance := id.CalcDistance(routingTable.me.ID)
 	for i := 0; i < kademliaid.IDLength; i++ {
 		for j := 0; j < 8; j++ {

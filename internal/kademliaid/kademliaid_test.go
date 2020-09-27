@@ -8,6 +8,35 @@ import (
 	"kademlia/internal/kademliaid"
 )
 
+func TestCalcDistance(t *testing.T) {
+	kadID := kademliaid.KademliaID{}
+
+	// should be equal because ids are the same
+	id := kademliaid.NewRandomKademliaID()
+	id2 := id
+	assert.Equal(t, &kadID, id.CalcDistance(id2))
+
+}
+
+func TestLess(t *testing.T) {
+
+	// should return false
+	id := kademliaid.NewRandomKademliaID()
+	id2 := id
+	assert.False(t, id.Less(id2))
+
+}
+
+func TestNewKademliaID(t *testing.T) {
+	// should return a hash
+	data := "TEST"
+	hash1 := kademliaid.NewKademliaID(&data)
+	assert.NotNil(t, hash1)
+
+	// should return the same hash
+	assert.Equal(t, kademliaid.NewKademliaID(&data), kademliaid.NewKademliaID(&data))
+}
+
 func TestFromString(t *testing.T) {
 	// should be the same
 	s := kademliaid.NewRandomKademliaID().String()

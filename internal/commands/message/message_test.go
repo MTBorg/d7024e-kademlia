@@ -2,10 +2,20 @@ package message_test
 
 import (
 	"kademlia/internal/commands/message"
+	"kademlia/internal/node"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestExecute(t *testing.T) {
+	// should return a string and not an error
+	node := &node.Node{}
+	msg := message.Message{}
+	resp, err := msg.Execute(node)
+	assert.Nil(t, err)
+	assert.Equal(t, "Message sent!", resp)
+}
 
 func TestParseOptions(t *testing.T) {
 	var msgCmd *message.Message
