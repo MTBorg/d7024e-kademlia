@@ -39,6 +39,6 @@ func (msg *Message) ParseOptions(options []string) error {
 	return nil
 }
 
-func (msg *Message) PrintUsage() {
-	log.Info().Msg("Usage: msg {target address} {message content}")
+func (msg *Message) PrintUsage() string {
+	return "Usage: msg {target address} {message content}"
 }

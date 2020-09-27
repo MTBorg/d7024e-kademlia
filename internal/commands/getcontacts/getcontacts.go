@@ -16,6 +16,6 @@ func (g *GetContacts) ParseOptions(options []string) error {
 	return nil
 }
 
-func (g *GetContacts) PrintUsage() {
-	log.Info().Msg("Usage: getcontacts")
+func (g *GetContacts) PrintUsage() string {
+	return "Usage: getcontacts"
 }

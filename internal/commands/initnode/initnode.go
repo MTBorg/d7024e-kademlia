@@ -35,6 +35,6 @@ func (i *InitNode) ParseOptions(options []string) error {
 	return nil
 }
 
-func (i *InitNode) PrintUsage() {
-	log.Info().Msg("Usage: init {address}")
+func (i *InitNode) PrintUsage() string {
+	return "Usage: init {address}"
 }

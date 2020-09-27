@@ -26,3 +26,10 @@ func TestExecute(t *testing.T) {
 	assert.Equal(t, "Empty! Please, populate the routingtable...", res)
 	assert.Nil(t, err)
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var getcsCmd *getcontacts.GetContacts
+	assert.Equal(t, getcsCmd.PrintUsage(), "Usage: getcontacts")
+
+}

@@ -42,3 +42,10 @@ func TestParseOptions(t *testing.T) {
 	err = msgCmd.ParseOptions([]string{"address"})
 	assert.NotNil(t, err)
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var msgCmd *message.Message
+	assert.Equal(t, msgCmd.PrintUsage(), "Usage: msg {target address} {message content}")
+
+}

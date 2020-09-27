@@ -19,6 +19,6 @@ func (g *GetId) ParseOptions(options []string) error {
 	return nil
 }
 
-func (g *GetId) PrintUsage() {
-	log.Info().Msg("Usage: getid")
+func (g *GetId) PrintUsage() string {
+	return "Usage: getid"
 }

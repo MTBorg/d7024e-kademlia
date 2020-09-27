@@ -20,6 +20,6 @@ func (p *Storage) ParseOptions(options []string) error {
 	return nil
 }
 
-func (p *Storage) PrintUsage() {
-	log.Info().Msg("Usage: data")
+func (p *Storage) PrintUsage() string {
+	return "Usage: data"
 }

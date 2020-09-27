@@ -40,3 +40,10 @@ func TestExecute(t *testing.T) {
 	assert.Equal(t, "Node initialized", res)
 	assert.Nil(t, err)
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var initCmd *initnode.InitNode
+	assert.Equal(t, initCmd.PrintUsage(), "Usage: init {address}")
+
+}

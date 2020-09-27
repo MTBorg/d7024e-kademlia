@@ -33,6 +33,6 @@ func (a *AddContact) ParseOptions(options []string) error {
 	return nil
 }
 
-func (a *AddContact) PrintUsage() {
-	log.Info().Msg("Usage: addcontact {nodeID} {address}")
+func (a *AddContact) PrintUsage() string {
+	return "Usage: addcontact {nodeID} {address}"
 }

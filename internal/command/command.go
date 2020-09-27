@@ -11,5 +11,5 @@ type Command interface {
 	// the struct
 	ParseOptions(options []string) error
 
-	PrintUsage()
+	PrintUsage() string
 }

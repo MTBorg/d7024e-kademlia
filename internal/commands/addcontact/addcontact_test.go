@@ -50,3 +50,10 @@ func TestExecute(t *testing.T) {
 	assert.Equal(t, "Contact added: 127.0.0.1:1776", res)
 	assert.Nil(t, err)
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var addcCmd *addcontact.AddContact
+	assert.Equal(t, addcCmd.PrintUsage(), "Usage: addcontact {nodeID} {address}")
+
+}
