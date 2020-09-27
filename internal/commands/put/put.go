@@ -23,8 +23,8 @@ func (put *Put) Execute(node *node.Node) (string, error) {
 	node.Store(&put.fileContent)
 
 	// Send STORE RPCs
-	for _, node := range closestNodes {
-		network.Net.SendStoreMessage(node.ID, node.Address, []byte(put.fileContent))
+	for _, closeNode := range closestNodes {
+		network.Net.SendStoreMessage(node.ID, closeNode.Address, []byte(put.fileContent))
 	}
 
 	return "", nil
