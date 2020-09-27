@@ -38,6 +38,6 @@ func (put *Put) ParseOptions(options []string) error {
 	return nil
 }
 
-func (put *Put) PrintUsage() {
-	log.Info().Msg("put <file content>")
+func (put *Put) PrintUsage() string {
+	return "put <file content>"
 }

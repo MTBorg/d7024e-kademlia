@@ -21,6 +21,6 @@ func (e *Exit) ParseOptions(options []string) error {
 	return nil
 }
 
-func (e *Exit) PrintUsage() {
-	log.Info().Msg("Usage: exit ")
+func (e *Exit) PrintUsage() string {
+	return "Usage: exit "
 }

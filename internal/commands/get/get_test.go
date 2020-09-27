@@ -23,3 +23,14 @@ func TestParseOption(t *testing.T) {
 	err = g.ParseOptions(options)
 	assert.Error(t, err)
 }
+
+func TestExecute(t *testing.T) {
+	// TODO: Not tested since .net lib
+}
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var getCmd *get.Get
+	assert.Equal(t, getCmd.PrintUsage(), "USAGE: get <hash>")
+
+}

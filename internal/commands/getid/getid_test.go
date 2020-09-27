@@ -31,3 +31,10 @@ func TestExecute(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, id.String(), res)
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var getidCmd *getid.GetId
+	assert.Equal(t, getidCmd.PrintUsage(), "Usage: getid")
+
+}

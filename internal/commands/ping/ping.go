@@ -30,6 +30,6 @@ func (p *Ping) ParseOptions(options []string) error {
 	return nil
 }
 
-func (p *Ping) PrintUsage() {
-	log.Info().Msg("Usage: ping {target address}")
+func (p *Ping) PrintUsage() string {
+	return "Usage: ping {target address}"
 }

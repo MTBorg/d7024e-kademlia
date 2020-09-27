@@ -36,3 +36,10 @@ func TestParseOptions(t *testing.T) {
 	err = pingCmd.ParseOptions([]string{})
 	assert.NotNil(t, err)
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var pingCmd *ping.Ping
+	assert.Equal(t, pingCmd.PrintUsage(), "Usage: ping {target address}")
+
+}

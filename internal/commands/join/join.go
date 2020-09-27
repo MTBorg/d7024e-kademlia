@@ -19,6 +19,6 @@ func (j *Join) ParseOptions(options []string) error {
 	return nil
 }
 
-func (j *Join) PrintUsage() {
-	log.Info().Msg("Usage: join")
+func (j *Join) PrintUsage() string {
+	return "Usage: join"
 }

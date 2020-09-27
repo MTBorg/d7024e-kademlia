@@ -38,6 +38,6 @@ func (get *Get) ParseOptions(options []string) error {
 	return nil
 }
 
-func (get *Get) PrintUsage() {
-	log.Info().Msg("USAGE: get <hash>")
+func (get *Get) PrintUsage() string {
+	return "USAGE: get <hash>"
 }

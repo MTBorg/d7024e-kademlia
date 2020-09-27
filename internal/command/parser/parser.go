@@ -56,7 +56,7 @@ func ParseCmd(s string) Command {
 	err := command.ParseOptions(fields[1:]) // Extract all options
 	if err != nil {
 		log.Error().Str("error", err.Error()).Msg("Failed to parse options")
-		command.PrintUsage()
+		log.Info().Msg(command.PrintUsage())
 		return nil
 	}
 

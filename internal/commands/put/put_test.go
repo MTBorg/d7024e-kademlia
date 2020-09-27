@@ -21,3 +21,10 @@ func TestParseOptions(t *testing.T) {
 	assert.NotNil(t, err)
 
 }
+
+func TestPrintUsage(t *testing.T) {
+	// should be equal
+	var putCmd *put.Put
+	assert.Equal(t, putCmd.PrintUsage(), "put <file content>")
+
+}
