@@ -5,6 +5,8 @@ import (
 	"kademlia/internal/bucket"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
+
+	"github.com/rs/zerolog/log"
 )
 
 const bucketSize = 20
@@ -37,8 +39,9 @@ func (routingTable *RoutingTable) AddContact(contact contact.Contact) {
 		bucketIndex := routingTable.GetBucketIndex(contact.ID)
 		bucket := routingTable.buckets[bucketIndex]
 		bucket.AddContact(contact)
+	} else {
+		log.Warn().Msg("Tried to add self as contact")
 	}
-
 }
 
 // FindClosestContacts finds the count closest Contacts to the target in the RoutingTable
