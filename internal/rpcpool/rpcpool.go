@@ -2,6 +2,7 @@ package rpcpool
 
 import (
 	"kademlia/internal/kademliaid"
+	"sync"
 )
 
 type Entry struct {
@@ -10,6 +11,7 @@ type Entry struct {
 }
 
 type RPCPool struct {
+	lock    sync.Mutex
 	entries map[kademliaid.KademliaID]*Entry
 }
 
@@ -29,4 +31,12 @@ func (pool *RPCPool) GetEntry(rpcId *kademliaid.KademliaID) *Entry {
 
 func (pool *RPCPool) Delete(rpcId *kademliaid.KademliaID) {
 	delete(pool.entries, *rpcId)
+}
+
+func (pool *RPCPool) Lock() {
+	pool.lock.Lock()
+}
+
+func (pool *RPCPool) Unlock() {
+	pool.lock.Unlock()
 }
