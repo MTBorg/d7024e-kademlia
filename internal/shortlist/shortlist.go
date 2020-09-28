@@ -14,9 +14,10 @@ const k = 5 // k-closest
 // an entry in the shortlist can be probed (if the RPC has been sent) and
 // active (if the probed contact has responded).
 type Entry struct {
-	Contact contact.Contact
-	Probed  bool
-	Active  bool
+	Contact       contact.Contact
+	Probed        bool
+	Active        bool
+	ReturnedValue bool
 }
 
 // The shortlist used in the lookup algorithm. The entries in the shortlist
@@ -62,7 +63,7 @@ func NewShortlist(target *kademliaid.KademliaID, candidates []contact.Contact) *
 	shortlist.Closest = &candidates[0]
 	shortlist.target = target
 	for i, contact := range candidates {
-		shortlist.Entries[i] = &Entry{contact, false, false}
+		shortlist.Entries[i] = &Entry{contact, false, false, false}
 	}
 	return shortlist
 }

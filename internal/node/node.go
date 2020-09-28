@@ -212,6 +212,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 					log.Info().Str("Value", value).Msg("Found value")
 
 					result = value
+					sl.Entries[i].ReturnedValue = true
 				} else {
 					contactsMutex.Lock()
 					contacts = append(contacts, deserializeContacts(data, hash)...)
@@ -226,6 +227,17 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			node.RPCPool.Delete(rpcIDs[i])
 		}
 		node.RPCPool.Unlock()
+
+		// Store value at closest node that did not return value
+		if result != "" {
+			for _, entry := range sl.Entries {
+				if entry != nil && entry.Probed && !entry.ReturnedValue {
+					network.Net.SendStoreMessage(node.ID, entry.Contact.Address, []byte(result))
+					break
+				}
+			}
+
+		}
 
 		for _, c := range contacts {
 			sl.Add(c)
