@@ -19,6 +19,7 @@ known_node_kadid="$(docker exec -it $known_node_cid kademliactl getid | sed -ne 
 for id in $cont_ids; do
   if [ "$id" != "$known_node_cid" ]; then
     docker exec -it $id kademliactl addcontact "$known_node_kadid" "$known_node_ip" > /dev/null
+    docker exec -it $id kademliactl join > /dev/null
   fi
 done
 
