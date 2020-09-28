@@ -8,7 +8,7 @@ import (
 type GetContacts struct{}
 
 func (g *GetContacts) Execute(node *node.Node) (string, error) {
-	log.Debug().Msg("Executing getcontacts command")
+	log.Trace().Msg("Executing getcontacts command")
 	return node.RoutingTable.GetContacts(), nil
 }
 

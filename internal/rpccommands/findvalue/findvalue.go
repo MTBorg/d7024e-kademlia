@@ -23,7 +23,7 @@ func New(requestor *contact.Contact, rpcId *kademliaid.KademliaID) *FindValue {
 }
 
 func (find *FindValue) Execute(node *node.Node) {
-	log.Info().Msg("Executing FIND_VALUE RPC")
+	log.Trace().Msg("Executing FIND_VALUE RPC")
 
 	if value := node.DataStore.Get(*find.hash); value != "" {
 		log.Debug().Str("Value", value).Str("Hash", find.hash.String()).Msg("Found key")
@@ -38,7 +38,6 @@ func (find *FindValue) Execute(node *node.Node) {
 		log.Debug().Str("Hash", find.hash.String()).Msg("Did not find key")
 		closest := node.FindKClosest(find.hash, find.requestor.ID, k)
 		data := contact.SerializeContacts(closest)
-		log.Print(closest)
 		network.Net.SendFindDataRespMessage(node.ID, find.requestor.Address, find.rpcId, &data)
 	}
 }

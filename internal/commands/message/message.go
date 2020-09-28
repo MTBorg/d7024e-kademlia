@@ -16,7 +16,7 @@ type Message struct {
 }
 
 func (msg Message) Execute(node *node.Node) (string, error) {
-	log.Debug().Str("Target", msg.Target).Msg("Executing message command")
+	log.Trace().Str("Target", msg.Target).Msg("Executing message command")
 	adr := address.New(msg.Target)
 	message := kademliaMessage.New(node.ID, msg.Content, adr)
 	udpSender := udpsender.New(adr)

@@ -28,6 +28,7 @@ func TestNew(t *testing.T) {
 	senderId := kademliaid.NewRandomKademliaID()
 	rpc := rpc.New(senderId, content, adr)
 
+	assert.Equal(t, rpc.SenderId, senderId)
 	assert.Equal(t, rpc.Target, adr)
 	assert.Equal(t, rpc.Content, content)
 }

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"kademlia/internal/node"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Store struct {
@@ -11,6 +13,7 @@ type Store struct {
 }
 
 func (store *Store) Execute(node *node.Node) {
+	log.Trace().Msg("Executing FIND_NODE RPC")
 	node.Store(&store.fileContent)
 }
 

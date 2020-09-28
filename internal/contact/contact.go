@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-func Myprint() {
-	fmt.Println("hallelujah")
-}
-
 // Contact definition
 // stores the KademliaID, the ip address and the distance
 type Contact struct {

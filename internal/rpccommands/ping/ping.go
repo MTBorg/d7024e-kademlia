@@ -5,6 +5,8 @@ import (
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/network"
 	"kademlia/internal/node"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Ping struct {
@@ -17,6 +19,7 @@ func New(senderAddress *address.Address, rpcId *kademliaid.KademliaID) Ping {
 }
 
 func (ping Ping) Execute(node *node.Node) {
+	log.Trace().Msg("Executing FIND_NODE RPC")
 	// Respond with pong
 	network.Net.SendPongMessage(node.ID, ping.senderAddress, ping.rpcId)
 }

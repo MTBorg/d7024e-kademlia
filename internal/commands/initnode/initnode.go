@@ -15,7 +15,7 @@ type InitNode struct {
 // Initialize the node by generating a NodeID and creating a new routing table
 // containing itself as a contact
 func (i *InitNode) Execute(node *node.Node) (string, error) {
-	log.Debug().Msg("Executing init command")
+	log.Trace().Msg("Executing init command")
 	log.Info().Msg("Initializing node...")
 
 	adr := address.New(i.Address)

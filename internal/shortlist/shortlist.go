@@ -4,8 +4,6 @@ import (
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"sort"
-
-	"github.com/rs/zerolog/log"
 )
 
 // TODO: Figure out a way to set this using env var. This is not as easy since
@@ -91,9 +89,6 @@ func (sl *Shortlist) Add(c *contact.Contact) {
 	for _, entry := range sl.Entries {
 		if entry != nil {
 			if entry.Contact.ID.Equals(c.ID) {
-				log.Trace().
-					Str("ContactID", c.ID.String()).
-					Msg("Contact was not added as it already existed in the shortlist")
 				return
 			}
 		}

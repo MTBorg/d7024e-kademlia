@@ -27,7 +27,7 @@ func ParseRPC(requestor *contact.Contact, rpc *rpc.RPC) (rpccommand.RPCCommand, 
 
 	var cmd rpccommand.RPCCommand
 	var err error
-	rpcLog := log.Info().Str("RPCId", rpc.RPCId.String())
+	rpcLog := log.Debug().Str("RPCId", rpc.RPCId.String())
 	switch identifier := fields[0]; identifier {
 	case "PING":
 		rpcLog.Msg("PING received")

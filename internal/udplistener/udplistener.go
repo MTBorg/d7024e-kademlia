@@ -36,12 +36,6 @@ func waitForMessages(c *net.UDPConn, node *node.Node) {
 		adr := address.New(addr.String())
 		rpcMsg, err := rpc.Deserialize(string(data))
 		if err == nil {
-			log.Info().
-				Str("Content", rpcMsg.Content).
-				Str("SenderId", rpcMsg.SenderId.String()).
-				Str("RPCId", rpcMsg.RPCId.String()).
-				Msg("Received message")
-
 			c := contact.NewContact(rpcMsg.SenderId, adr)
 			node.RoutingTable.AddContact(c)
 
@@ -60,9 +54,9 @@ func waitForMessages(c *net.UDPConn, node *node.Node) {
 					Msg("Failed to parse RPC options")
 			}
 
-			log.Debug().Str("Id", c.ID.String()).Str("Address", c.Address.String()).Msg("Updating bucket")
+			log.Trace().Str("NodeID", c.ID.String()).Str("Address", c.Address.String()).Msg("Inserting new node to bucket")
 		} else {
-			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message")
+			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message in UDPListener")
 		}
 	}
 }

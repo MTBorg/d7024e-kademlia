@@ -7,8 +7,6 @@ import (
 
 	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
-
-	"github.com/rs/zerolog/log"
 )
 
 type RPC struct {
@@ -49,7 +47,6 @@ func (rpc *RPC) serialize() string {
 }
 
 func Deserialize(s string) (RPC, error) {
-	log.Debug().Str("String", s).Msg("Dezerializing string")
 	fields := strings.Split(s, ";")
 	if len(fields) <= 2 {
 		return RPC{}, errors.New("Missing sender id or rpc id")
