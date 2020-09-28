@@ -80,6 +80,10 @@ func (contact *Contact) serialize() string {
 	return fmt.Sprintf("%s!%s", contact.ID.String(), contact.Address.String())
 }
 
+func (contact *Contact) GetDistance() *kademliaid.KademliaID {
+	return contact.distance
+}
+
 func SerializeContacts(contacts []Contact) string {
 	s := ""
 	for i, contact := range contacts {
