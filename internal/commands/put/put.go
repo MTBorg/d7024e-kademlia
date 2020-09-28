@@ -27,7 +27,7 @@ func (put *Put) Execute(node *node.Node) (string, error) {
 		network.Net.SendStoreMessage(node.ID, closeNode.Address, []byte(put.fileContent))
 	}
 
-	return "", nil
+	return key.String(), nil
 }
 
 func (put *Put) ParseOptions(options []string) error {
