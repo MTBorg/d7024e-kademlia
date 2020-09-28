@@ -20,7 +20,9 @@ func New(rpcId *kademliaid.KademliaID) *FindNodeResp {
 
 func (fnResp *FindNodeResp) Execute(node *node.Node) {
 	log.Trace().Msg("Executing FIND_NODE_RESPONSE RPC")
+	node.RPCPool.Lock()
 	entry := node.NodeData.RPCPool.GetEntry(fnResp.rpcId)
+	node.RPCPool.Unlock()
 	if entry != nil {
 		log.Trace().Str("rpcID", fnResp.rpcId.String()).Msg("Writing to channel with rpcID")
 		entry.Channel <- *fnResp.data

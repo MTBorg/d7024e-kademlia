@@ -20,7 +20,9 @@ func New(rpcId *kademliaid.KademliaID) *FindValueResp {
 
 func (findresp *FindValueResp) Execute(node *node.Node) {
 	log.Trace().Msg("Executing FIND_VALUE_RESP RPC")
+	node.RPCPool.Lock()
 	entry := node.RPCPool.GetEntry(findresp.rpcId)
+	node.RPCPool.Unlock()
 	if entry != nil {
 		entry.Channel <- findresp.content
 	} else {
