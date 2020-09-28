@@ -66,7 +66,7 @@ func (bucket *Bucket) GetContactAndCalcDistanceNoRequestor(target *KademliaID, r
 
 	for elt := bucket.list.Front(); elt != nil; elt = elt.Next() {
 		contact := elt.Value.(Contact)
-		if contact.ID != requestorID {
+		if !contact.ID.Equals(requestorID) {
 			contact.CalcDistance(target)
 			contacts = append(contacts, contact)
 		}

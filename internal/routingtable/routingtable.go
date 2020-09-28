@@ -59,11 +59,19 @@ func (routingTable *RoutingTable) FindClosestContacts(target *kademliaid.Kademli
 	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < kademliaid.IDLength*8) && candidates.Len() < count; i++ {
 		if bucketIndex-i >= 0 {
 			bucket = routingTable.buckets[bucketIndex-i]
-			candidates.Append(bucket.GetContactAndCalcDistance(target))
+			if requestorID != nil {
+				candidates.Append(bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID))
+			} else {
+				candidates.Append(bucket.GetContactAndCalcDistance(target))
+			}
 		}
 		if bucketIndex+i < kademliaid.IDLength*8 {
 			bucket = routingTable.buckets[bucketIndex+i]
-			candidates.Append(bucket.GetContactAndCalcDistance(target))
+			if requestorID != nil {
+				candidates.Append(bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID))
+			} else {
+				candidates.Append(bucket.GetContactAndCalcDistance(target))
+			}
 		}
 	}
 
