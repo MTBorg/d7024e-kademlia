@@ -27,7 +27,7 @@ func (find *FindValue) Execute(node *node.Node) {
 
 	if value := node.DataStore.Get(*find.hash); value != "" {
 		log.Debug().Str("Value", value).Str("Hash", find.hash.String()).Msg("Found key")
-		s := "VALUE=" + value
+		s := "VALUE=" + value + ";" + node.ID.String()
 		network.Net.SendFindDataRespMessage(node.ID, find.requestor.Address, find.rpcId, &s)
 	} else {
 

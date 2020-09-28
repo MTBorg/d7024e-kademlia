@@ -206,10 +206,13 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 				if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
 					regex := regexp.MustCompile(`=`)
 					s := regex.Split(data, 2)
-					value := s[1]
+					res := s[1]
+					s = strings.Split(res, ";")
+					value := s[0]
+					nodeID := s[1]
 					log.Info().Str("Value", value).Msg("Found value")
 
-					result = value
+					result = "Data: " + value + " from node with id: " + nodeID
 				} else {
 					sContacts := strings.Split(data, " ")
 					for _, sContact := range sContacts {
