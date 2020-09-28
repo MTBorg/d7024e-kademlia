@@ -236,12 +236,22 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 		}
 		node.RPCPool.Unlock()
 
-		if result != "" {
-			return result
-		}
-
 		for _, c := range contacts {
 			sl.Add(c)
+		}
+
+		if result != "" {
+			return result
+		} else {
+			s := "Value not found, k closest contacts: ["
+			for i, entry := range sl.Entries {
+				s += entry.Contact.String()
+				if i < len(sl.Entries)-1 {
+					s += ", "
+				}
+			}
+			s += "]"
+			return s
 		}
 	}
 
