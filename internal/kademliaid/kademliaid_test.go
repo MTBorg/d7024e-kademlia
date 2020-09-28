@@ -54,13 +54,14 @@ func TestString(t *testing.T) {
 
 func TestEquals(t *testing.T) {
 	// should return true since the both ids are the same
-	id := kademliaid.NewRandomKademliaID()
-	id2 := id
+	id := kademliaid.FromString("0000000000FFFFFFFFFF")
+	id2 := kademliaid.FromString("0000000000FFFFFFFFFF")
 	assert.True(t, id.Equals(id2))
 
 	// should return false since we have generated a new id for id2
 	id2 = kademliaid.NewRandomKademliaID()
 	assert.False(t, id.Equals(id2))
+
 }
 
 func TestNewRandomKademliaID(t *testing.T) {
