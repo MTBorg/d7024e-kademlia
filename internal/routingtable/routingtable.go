@@ -40,7 +40,7 @@ func (routingTable *RoutingTable) AddContact(contact contact.Contact) {
 		bucket := routingTable.buckets[bucketIndex]
 		bucket.AddContact(contact)
 	} else {
-		log.Warn().Msg("Tried to add self as contact")
+		log.Warn().Str("me", routingTable.me.String()).Str("contact", contact.String()).Msg("Tried to add self as contact")
 	}
 }
 

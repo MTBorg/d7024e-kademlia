@@ -14,7 +14,7 @@ type Put struct {
 }
 
 func (put *Put) Execute(node *node.Node) (string, error) {
-	log.Debug().Msg("Executing put command")
+	log.Trace().Msg("Executing put command")
 
 	key := kademliaid.NewKademliaID(&put.fileContent)
 	// closestNodes := node.FindKClosest(&key, nil, k)

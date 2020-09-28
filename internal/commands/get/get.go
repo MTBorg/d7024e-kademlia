@@ -13,14 +13,13 @@ type Get struct {
 }
 
 func (get *Get) Execute(node *node.Node) (string, error) {
-	log.Debug().Msg("Executing get command")
+	log.Trace().Msg("Executing get command")
 
 	// Check local storage
 	value := node.DataStore.Get(get.hash)
 	if value == "" {
 		log.Debug().Str("Key", get.hash.String()).Msg("Value not found locally")
 
-		// TODO: Send FIND_NODE RPC
 		value = node.LookupData(&get.hash)
 	}
 

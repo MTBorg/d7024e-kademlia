@@ -15,11 +15,11 @@ import (
 // bound address.
 // Works by removing the file specified by the specified socket address.
 func ClearSocket(socketAddress string) {
-	log.Debug().Str("SocketAddress", socketAddress).Msg("Clearing socket")
+	log.Trace().Str("SocketAddress", socketAddress).Msg("Clearing socket")
 	if err := os.RemoveAll(socketAddress); err != nil {
 		log.Error().Str("SocketAddress", socketAddress).Msg("Failed to clear socket")
 	} else {
-		log.Debug().Str("SocketAddress", socketAddress).Msg("Socket cleared")
+		log.Trace().Str("SocketAddress", socketAddress).Msg("Socket cleared")
 	}
 }
 
@@ -42,7 +42,6 @@ func respond(c net.Conn, node *node.Node) {
 
 		// Write response
 		if err == nil {
-			log.Debug().Str("Message", executionResult).Msg("Sending response")
 			_, err = c.Write([]byte(executionResult))
 			if err != nil {
 				log.Error().Msgf("Failed to write response: %s", err)
@@ -73,7 +72,7 @@ func Listen(node *node.Node) {
 	for {
 		c, err := l.Accept()
 		if err == nil {
-			log.Info().Str("Address", socketAddress).Msg("Received message from socket")
+			log.Trace().Str("Address", socketAddress).Msg("Received message from socket")
 			go respond(c, node)
 		} else {
 			log.Error().Msgf("Listener failed to accept: %s", err)

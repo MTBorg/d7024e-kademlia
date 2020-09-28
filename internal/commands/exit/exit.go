@@ -11,7 +11,7 @@ type Exit struct {
 }
 
 func (e Exit) Execute(node *node.Node) (string, error) {
-	log.Debug().Msg("Executing exit command")
+	log.Trace().Msg("Executing exit command")
 	log.Info().Msg("Node exiting...")
 	os.Exit(0)
 	return "Node exited", nil
