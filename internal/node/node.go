@@ -48,6 +48,49 @@ func (node *Node) JoinNetwork() {
 	node.LookupContact(node.RoutingTable.GetMe().ID)
 }
 
+// Probes at most alpha nodes from the shortlist with content
+func (node *Node) probeAlpha(
+	sl *shortlist.Shortlist,
+	channels *[]chan string,
+	content string,
+	alpha int) (int, []*kademliaid.KademliaID) {
+
+	numProbed := 0
+	rpcIds := []*kademliaid.KademliaID{}
+	for i := 0; i < sl.Len() && numProbed < alpha; i++ {
+		if !sl.Entries[i].Probed {
+			sl.Entries[i].Probed = true
+			rpc := node.NewRPC(content, sl.Entries[i].Contact.Address)
+
+			node.RPCPool.Lock()
+			node.RPCPool.Add(rpc.RPCId)
+			entryRPC := node.RPCPool.GetEntry(rpc.RPCId)
+			node.RPCPool.Unlock()
+
+			rpcIds = append(rpcIds, rpc.RPCId)
+			(*channels)[numProbed] = entryRPC.Channel
+			numProbed++
+			network.Net.SendFindContactMessage(&rpc)
+		}
+	}
+	return numProbed, rpcIds
+}
+
+func deserializeContacts(data string, targetId *kademliaid.KademliaID) []*contact.Contact {
+	contacts := []*contact.Contact{}
+	for _, sContact := range strings.Split(data, " ") {
+		err, c := contact.Deserialize(&sContact)
+		if err == nil {
+			c.CalcDistance(targetId)
+			contacts = append(contacts, c)
+		} else {
+			log.Warn().Msgf("Failed to deserialize contact: %s", err)
+			log.Print(sContact)
+		}
+	}
+	return contacts
+}
+
 // LookupContact searches for the contact with the specified key using the node
 // lookup algorithm.
 //
@@ -68,23 +111,8 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 		closestSoFar := sl.Closest
 
 		// Probe alpha new nodes
-		numProbed := 0
-		rpcIds := []*kademliaid.KademliaID{}
 		var contactsMutex sync.Mutex
-		for i := 0; i < sl.Len() && numProbed < alpha; i++ {
-			if !sl.Entries[i].Probed {
-				sl.Entries[i].Probed = true
-				rpc := node.NewRPC(fmt.Sprintf("%s %s", "FIND_NODE", id), sl.Entries[i].Contact.Address)
-				node.RPCPool.Lock()
-				node.RPCPool.Add(rpc.RPCId)
-				entryRPC := node.RPCPool.GetEntry(rpc.RPCId)
-				node.RPCPool.Unlock()
-				rpcIds = append(rpcIds, rpc.RPCId)
-				channels[numProbed] = entryRPC.Channel
-				numProbed++
-				network.Net.SendFindContactMessage(&rpc)
-			}
-		}
+		numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), alpha)
 
 		// If no new nodes were probed this iteration the search is done
 		if numProbed == 0 {
@@ -100,24 +128,20 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 			go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
 				defer wg.Done()
 				data := <-channels[i]
-				node.RPCPool.Lock()
-				node.RPCPool.Delete(rpcIds[i]) // remove from rpc pool
-				node.RPCPool.Unlock()
 
 				// parse contacts from response data
-				strContacts := strings.Split(data, " ")
-				for _, strContact := range strContacts {
-					err, contact := contact.Deserialize(&strContact)
-					if err == nil {
-						contactsMutex.Lock()
-						contacts = append(contacts, contact)
-						contactsMutex.Unlock()
-					}
-				}
+				contactsMutex.Lock()
+				contacts = append(contacts, deserializeContacts(data, id)...)
+				contactsMutex.Unlock()
 			}(i, &wg, &contactsMutex)
 		}
-
 		wg.Wait()
+
+		node.RPCPool.Lock()
+		for i := 0; i < numProbed; i++ {
+			node.RPCPool.Delete(rpcIds[i])
+		}
+		node.RPCPool.Unlock()
 
 		// Update shortlist with new contacts recieved from responses
 		for _, contact := range contacts {
@@ -161,34 +185,13 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 
 	// iterative lookup until the search becomes stale and no closer node
 	// can be found
-	stale := false
-	for !stale {
+	for {
 		channels := make([]chan string, alpha)
 		var contactsMutex sync.Mutex
 
-		// probe at most the alpha closest nodes
-		probed := 0
-		rpcIDs := []*kademliaid.KademliaID{}
-		for i := 0; i < sl.Len() && probed < alpha; i++ {
-			if !sl.Entries[i].Probed && !sl.Entries[i].Contact.ID.Equals(node.ID) {
-				sl.Entries[i].Probed = true
-				rpc := node.NewRPC(
-					fmt.Sprintf("FIND_VALUE %s", hash.String()),
-					sl.Entries[i].Contact.Address)
-				rpcIDs = append(rpcIDs, rpc.RPCId)
+		numProbed, rpcIDs := node.probeAlpha(sl, &channels, fmt.Sprintf("FIND_VALUE %s", hash.String()), alpha)
 
-				node.RPCPool.Lock()
-				node.RPCPool.Add(rpc.RPCId)
-				entry := node.RPCPool.GetEntry(rpc.RPCId)
-				node.RPCPool.Unlock()
-
-				channels[probed] = entry.Channel
-				probed++
-				network.Net.SendFindDataMessage(&rpc)
-			}
-		}
-
-		if probed == 0 {
+		if numProbed == 0 {
 			log.Trace().Msg("FIND_VALUE lookup became stale")
 			break
 		}
@@ -196,11 +199,10 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 		contacts := []*contact.Contact{}
 		result := ""
 		var wg sync.WaitGroup
-		wg.Add(probed)
-		for i := 0; i < probed; i++ {
+		wg.Add(numProbed)
+		for i := 0; i < numProbed; i++ {
 			go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
 				defer wg.Done()
-
 				data := <-channels[i]
 
 				if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
@@ -211,27 +213,16 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 
 					result = value
 				} else {
-					sContacts := strings.Split(data, " ")
-					for _, sContact := range sContacts {
-						err, c := contact.Deserialize(&sContact)
-						if err == nil {
-							c.CalcDistance(hash)
-							contactsMutex.Lock()
-							contacts = append(contacts, c)
-							contactsMutex.Unlock()
-						} else {
-							log.Warn().Msgf("Failed to deserialize contact: %s", err)
-							log.Print(sContact)
-						}
-					}
+					contactsMutex.Lock()
+					contacts = append(contacts, deserializeContacts(data, hash)...)
+					contactsMutex.Unlock()
 				}
 			}(i, &wg, &contactsMutex)
 		}
-
 		wg.Wait()
 
 		node.RPCPool.Lock()
-		for i := 0; i < probed; i++ {
+		for i := 0; i < numProbed; i++ {
 			node.RPCPool.Delete(rpcIDs[i])
 		}
 		node.RPCPool.Unlock()
