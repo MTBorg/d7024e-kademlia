@@ -146,11 +146,19 @@ func (node *Node) lookupDataHandleResponses(sl *shortlist.Shortlist,
 
 			if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
 				regex := regexp.MustCompile(`=`)
-				s := regex.Split(data, 2)
-				value := s[1]
-				log.Info().Str("Value", value).Msg("Found value")
 
-				result = value
+				// Extract value pairs
+				fields := strings.Split(data, "/")
+				valueField := fields[0]
+				senderIdField := fields[1]
+
+				// Extract values
+				value := regex.Split(valueField, 2)[1]
+				senderId := regex.Split(senderIdField, 2)[1]
+
+				log.Info().Str("Value", value).Str("SenderID", senderId).Msg("Found value")
+
+				result = value + ", from node: " + senderId
 				sl.Entries[i].ReturnedValue = true
 			} else {
 				contactsMutex.Lock()

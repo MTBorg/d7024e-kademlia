@@ -4,18 +4,20 @@ import (
 	"errors"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
+	"regexp"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 )
 
 type FindValueResp struct {
-	content string
-	rpcId   *kademliaid.KademliaID
+	content  string
+	rpcId    *kademliaid.KademliaID
+	senderId *kademliaid.KademliaID
 }
 
-func New(rpcId *kademliaid.KademliaID) *FindValueResp {
-	return &FindValueResp{rpcId: rpcId}
+func New(senderId *kademliaid.KademliaID, rpcId *kademliaid.KademliaID) *FindValueResp {
+	return &FindValueResp{senderId: senderId, rpcId: rpcId}
 }
 
 func (findresp *FindValueResp) Execute(node *node.Node) {
@@ -24,7 +26,11 @@ func (findresp *FindValueResp) Execute(node *node.Node) {
 	entry := node.RPCPool.GetEntry(findresp.rpcId)
 	node.RPCPool.Unlock()
 	if entry != nil {
-		entry.Channel <- findresp.content
+		if match, _ := regexp.MatchString("VALUE=.*", findresp.content); match { // Value was found
+			entry.Channel <- findresp.content + "/SENDERID=" + findresp.senderId.String()
+		} else {
+			entry.Channel <- findresp.content
+		}
 	} else {
 		log.Warn().Str("RPCID", findresp.rpcId.String()).Msg("Tried write to nil RPCPool")
 	}

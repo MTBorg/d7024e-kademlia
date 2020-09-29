@@ -49,7 +49,7 @@ func ParseRPC(requestor *contact.Contact, rpc *rpc.RPC) (rpccommand.RPCCommand, 
 		cmd = findvalue.New(requestor, rpc.RPCId)
 	case "FIND_VALUE_RESP":
 		rpcLog.Msg("FIND_VALUE_RESP received")
-		cmd = findvalueresp.New(rpc.RPCId)
+		cmd = findvalueresp.New(requestor.ID, rpc.RPCId)
 	default:
 		err = errors.New(fmt.Sprintf("Received unknown RPC %s", identifier))
 		cmd = nil
