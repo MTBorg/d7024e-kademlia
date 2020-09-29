@@ -17,7 +17,9 @@ func (get *Get) Execute(node *node.Node) (string, error) {
 
 	// Check local storage
 	value := node.DataStore.Get(get.hash)
-	if value == "" {
+	if value != "" {
+		value += ", from local node"
+	} else {
 		log.Debug().Str("Key", get.hash.String()).Msg("Value not found locally")
 
 		value = node.LookupData(&get.hash)
