@@ -191,6 +191,10 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	if err != nil {
 		log.Error().Msgf("Failed to convert env variable ALPHA from string to int: %s", err)
 	}
+	k, err := strconv.Atoi(os.Getenv("K"))
+	if err != nil {
+		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
+	}
 
 	sl := shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
 	channels := make([]chan string, alpha)
@@ -213,7 +217,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 		// the search since no node closer to the target was found this iteration
 		if sl.Closest == closestSoFar {
 			log.Trace().Msg("Closest node not updated")
-			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), alpha)
+			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), k)
 
 			node.lookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
 			break
@@ -245,6 +249,10 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 	if err != nil {
 		log.Error().Msgf("Failed to convert env variable ALPHA from string to int: %s", err)
 	}
+	k, err := strconv.Atoi(os.Getenv("K"))
+	if err != nil {
+		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
+	}
 
 	sl := shortlist.NewShortlist(hash, node.FindKClosest(hash, nil, alpha))
 
@@ -269,7 +277,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 
 		if sl.Closest == closestSoFar {
 			log.Trace().Msg("Closest node not updated")
-			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), alpha)
+			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), k)
 
 			result = node.lookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIds)
 			if result != "" {
