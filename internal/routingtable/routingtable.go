@@ -2,11 +2,10 @@ package routingtable
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"kademlia/internal/bucket"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
-
-	"github.com/rs/zerolog/log"
 )
 
 const bucketSize = 20
@@ -125,4 +124,8 @@ func (routingTable *RoutingTable) GetBucketIndex(id *kademliaid.KademliaID) int 
 	}
 
 	return kademliaid.IDLength*8 - 1
+}
+
+func (routingTable *RoutingTable) GetBucket(index int) *bucket.Bucket {
+	return routingTable.buckets[index]
 }
