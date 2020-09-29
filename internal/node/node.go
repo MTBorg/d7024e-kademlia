@@ -8,6 +8,7 @@ import (
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/network"
 	"kademlia/internal/nodedata"
+	"kademlia/internal/refreshtimer"
 	"kademlia/internal/routingtable"
 	"kademlia/internal/rpc"
 	"kademlia/internal/rpcpool"
@@ -30,12 +31,14 @@ type Node struct {
 func (node *Node) Init(address *address.Address) {
 	id := kademliaid.NewRandomKademliaID()
 	me := contact.NewContact(id, address)
+	refreshTimers := []*refreshtimer.RefreshTimer{}
 	*node = Node{
 		NodeData: nodedata.NodeData{
-			RoutingTable: routingtable.NewRoutingTable(me),
-			DataStore:    datastore.New(),
-			ID:           id,
-			RPCPool:      rpcpool.New(),
+			RoutingTable:  routingtable.NewRoutingTable(me),
+			DataStore:     datastore.New(),
+			ID:            id,
+			RPCPool:       rpcpool.New(),
+			RefreshTimers: refreshTimers,
 		},
 	}
 }
@@ -46,6 +49,15 @@ func (node *Node) Init(address *address.Address) {
 // TODO: Should maybe check that the node knows of another node in the network.
 // This is not a problem as long as the init script is used.
 func (node *Node) JoinNetwork() {
+	// start new refresh timers for each bucket, skip last bucket since no node
+	// will be in it whp
+	for i := 0; i < kademliaid.IDLength*8-1; i++ {
+		rt := refreshtimer.NewRefreshTimer(i)
+		node.RefreshTimers = append(node.RefreshTimers, rt)
+		rt.StartRefreshTimer(node.RefreshBucket)
+	}
+
+	// lookup on self
 	kClosest := node.LookupContact(node.RoutingTable.GetMe().ID)
 	if len(kClosest) == 0 {
 		log.Error().Msg("Failed to join network: Lookup on self resulted in no contacts")
@@ -216,6 +228,12 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
 	}
 
+	// Restart refresh timer of the bucket this ID is in range of
+	if *id != *node.ID {
+		bucketIndex := node.RoutingTable.GetBucketIndex(id)
+		node.RefreshTimers[bucketIndex].RestartRefreshTimer()
+	}
+
 	sl := shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
 	// might need more than alpha channels on final probe is closest did not change
 	channels := make([]chan string, k)
@@ -274,6 +292,10 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 	if err != nil {
 		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
 	}
+
+	// Restart the refresh timer of the bucket this ID is in range of
+	bucketIndex := node.RoutingTable.GetBucketIndex(hash)
+	node.RefreshTimers[bucketIndex].RestartRefreshTimer()
 
 	sl := shortlist.NewShortlist(hash, node.FindKClosest(hash, nil, alpha))
 
