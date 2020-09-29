@@ -59,6 +59,7 @@ func (node *Node) probeAlpha(
 	rpcIds := []*kademliaid.KademliaID{}
 	for i := 0; i < sl.Len() && numProbed < alpha; i++ {
 		if !sl.Entries[i].Probed {
+			log.Trace().Str("NodeID", sl.Entries[i].Contact.ID.String()).Msg("Probing node")
 			sl.Entries[i].Probed = true
 			rpc := node.NewRPC(content, sl.Entries[i].Contact.Address)
 
@@ -91,12 +92,92 @@ func deserializeContacts(data string, targetId *kademliaid.KademliaID) []*contac
 	return contacts
 }
 
+// Handles the responses from the probed nodes during a node lookup
+func (node *Node) lookupContactHandleResponses(
+	sl *shortlist.Shortlist,
+	targetId *kademliaid.KademliaID,
+	numProbed int,
+	channels *[]chan string,
+	rpcIds []*kademliaid.KademliaID) {
+	// Handle response from probed nodes
+	var contactsMutex sync.Mutex
+	contacts := []*contact.Contact{}
+	var wg sync.WaitGroup
+	wg.Add(numProbed)
+	for i := 0; i < numProbed; i++ {
+		go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
+			defer wg.Done()
+			data := <-(*channels)[i]
+
+			// parse contacts from response data
+			contactsMutex.Lock()
+			contacts = append(contacts, deserializeContacts(data, targetId)...)
+			contactsMutex.Unlock()
+		}(i, &wg, &contactsMutex)
+	}
+	wg.Wait()
+
+	node.RPCPool.Lock()
+	for i := 0; i < numProbed; i++ {
+		node.RPCPool.Delete(rpcIds[i])
+	}
+	node.RPCPool.Unlock()
+
+	for _, contact := range contacts {
+		sl.Add(contact)
+	}
+}
+
+func (node *Node) lookupDataHandleResponses(sl *shortlist.Shortlist,
+	targetId *kademliaid.KademliaID,
+	numProbed int,
+	channels *[]chan string,
+	rpcIds []*kademliaid.KademliaID) string {
+
+	contacts := []*contact.Contact{}
+	var contactsMutex sync.Mutex
+	result := ""
+	var wg sync.WaitGroup
+	wg.Add(numProbed)
+	for i := 0; i < numProbed; i++ {
+		go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
+			defer wg.Done()
+			data := <-(*channels)[i]
+
+			if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
+				regex := regexp.MustCompile(`=`)
+				s := regex.Split(data, 2)
+				value := s[1]
+				log.Info().Str("Value", value).Msg("Found value")
+
+				result = value
+				sl.Entries[i].ReturnedValue = true
+			} else {
+				contactsMutex.Lock()
+				contacts = append(contacts, deserializeContacts(data, targetId)...)
+				contactsMutex.Unlock()
+			}
+		}(i, &wg, &contactsMutex)
+	}
+	wg.Wait()
+
+	node.RPCPool.Lock()
+	for i := 0; i < numProbed; i++ {
+		node.RPCPool.Delete(rpcIds[i])
+	}
+	node.RPCPool.Unlock()
+
+	for _, c := range contacts {
+		sl.Add(c)
+	}
+
+	return result
+}
+
 // LookupContact searches for the contact with the specified key using the node
 // lookup algorithm.
 //
-// This implementation uses waitGroups to send alpha parallel FIND_NODE RPCs
-// and waits for the response of each request.
-// TODO: Ignore request after waiting X time and continue with next iteration
+// TODO: Ignore request after waiting X time
 func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	alpha, err := strconv.Atoi(os.Getenv("ALPHA"))
 	if err != nil {
@@ -110,8 +191,6 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	for {
 		closestSoFar := sl.Closest
 
-		// Probe alpha new nodes
-		var contactsMutex sync.Mutex
 		numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), alpha)
 
 		// If no new nodes were probed this iteration the search is done
@@ -120,38 +199,16 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 			break
 		}
 
-		// Handle response from probed nodes
-		contacts := []*contact.Contact{}
-		var wg sync.WaitGroup
-		wg.Add(numProbed)
-		for i := 0; i < numProbed; i++ {
-			go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
-				defer wg.Done()
-				data := <-channels[i]
-
-				// parse contacts from response data
-				contactsMutex.Lock()
-				contacts = append(contacts, deserializeContacts(data, id)...)
-				contactsMutex.Unlock()
-			}(i, &wg, &contactsMutex)
-		}
-		wg.Wait()
-
-		node.RPCPool.Lock()
-		for i := 0; i < numProbed; i++ {
-			node.RPCPool.Delete(rpcIds[i])
-		}
-		node.RPCPool.Unlock()
-
-		// Update shortlist with new contacts recieved from responses
-		for _, contact := range contacts {
-			sl.Add(contact)
-		}
+		node.lookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
 
 		// Send FIND_NODE to all unqueried nodes in the shortlist and terminate
 		// the search since no node closer to the target was found this iteration
 		if sl.Closest == closestSoFar {
-			// TODO
+			log.Trace().Msg("Closest node not updated")
+			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), alpha)
+
+			node.lookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
+			break
 		}
 	}
 
@@ -185,9 +242,10 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 
 	// iterative lookup until the search becomes stale and no closer node
 	// can be found
+	result := ""
 	for {
 		channels := make([]chan string, alpha)
-		var contactsMutex sync.Mutex
+		closestSoFar := sl.Closest
 
 		numProbed, rpcIDs := node.probeAlpha(sl, &channels, fmt.Sprintf("FIND_VALUE %s", hash.String()), alpha)
 
@@ -196,69 +254,32 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			break
 		}
 
-		contacts := []*contact.Contact{}
-		result := ""
-		var wg sync.WaitGroup
-		wg.Add(numProbed)
-		for i := 0; i < numProbed; i++ {
-			go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
-				defer wg.Done()
-				data := <-channels[i]
-
-				if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
-					regex := regexp.MustCompile(`=`)
-					s := regex.Split(data, 2)
-					value := s[1]
-					log.Info().Str("Value", value).Msg("Found value")
-
-					result = value
-					sl.Entries[i].ReturnedValue = true
-				} else {
-					contactsMutex.Lock()
-					contacts = append(contacts, deserializeContacts(data, hash)...)
-					contactsMutex.Unlock()
-				}
-			}(i, &wg, &contactsMutex)
-		}
-		wg.Wait()
-
-		node.RPCPool.Lock()
-		for i := 0; i < numProbed; i++ {
-			node.RPCPool.Delete(rpcIDs[i])
-		}
-		node.RPCPool.Unlock()
-
-		// Store value at closest node that did not return value
-		if result != "" {
-			for _, entry := range sl.Entries {
-				if entry != nil && entry.Probed && !entry.ReturnedValue {
-					network.Net.SendStoreMessage(node.ID, entry.Contact.Address, []byte(result))
-					break
-				}
-			}
-
-		}
-
-		for _, c := range contacts {
-			sl.Add(c)
-		}
-
+		result = node.lookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIDs)
 		if result != "" {
 			return result
-		} else {
-			s := "Value not found, k closest contacts: ["
-			for i, entry := range sl.Entries {
-				s += entry.Contact.String()
-				if i < len(sl.Entries)-1 {
-					s += ", "
-				}
-			}
-			s += "]"
-			return s
 		}
+
+		if sl.Closest == closestSoFar {
+			log.Trace().Msg("Closest node not updated")
+			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), alpha)
+
+			result = node.lookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIds)
+			if result != "" {
+				return result
+			}
+		}
+
 	}
 
-	return ""
+	s := "Value not found, k closest contacts: ["
+	for i, entry := range sl.Entries {
+		s += entry.Contact.String()
+		if i < len(sl.Entries)-1 {
+			s += ", "
+		}
+	}
+	s += "]"
+	return s
 }
 
 func (node *Node) Store(value *string) {
