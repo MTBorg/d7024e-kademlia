@@ -3,6 +3,7 @@ package kademliaid
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -70,4 +71,41 @@ func FromString(s string) *KademliaID {
 	decoded, _ := hex.DecodeString(s)
 	copy(id[:], decoded)
 	return &id
+}
+
+// NewKademliaIDInRange returns a new random KademliaID which will be
+// inside the range of the nodes (with NodeID id) k-bucket with index bucketIndex
+//
+// The implementation assumes that the first byte in the byte array of the
+// kademliaID is the most significant byte (big endian)
+func NewKademliaIDInRange(id *KademliaID, bucketIndex int) *KademliaID {
+	// The routing tables GetBucketIndex will say that an id which differs on all
+	// bits is in bucket with index 0 so the order of the buckets is reversed
+	// from the description in the paper, hence the convertion below
+	bucketIndex = 159 - bucketIndex
+	commonID := KademliaID{}
+	for i := 0; i < IDLength; i++ {
+		// Copy the node id until the differing bit is reached, this is bit nr
+		// bucketIndex + 1 (assuming bit starts at 0), randomize the remaining
+		var iByte uint8 = 0
+		for j := 0; j < 8; j++ {
+			bit := uint8(math.Pow(float64(2), float64(7-j)))
+			bitValue := id[i] & bit
+
+			if (IDLength-i)*8-j > bucketIndex+1 {
+				// Copy the bits if still at the matching prefix
+				iByte += bitValue
+			} else if (IDLength-i)*8-j == bucketIndex+1 {
+				// make sure the differing bit differs
+				if bitValue == 0 {
+					iByte += bit
+				}
+			} else {
+				// Randomize all the bits after the differing bit
+				iByte += uint8(rand.Intn(2)) * uint8(math.Pow(float64(2), float64(7-j)))
+			}
+			commonID[i] = iByte
+		}
+	}
+	return &commonID
 }

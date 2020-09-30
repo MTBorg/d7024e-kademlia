@@ -1,11 +1,13 @@
 package kademliaid_test
 
 import (
+	"kademlia/internal/address"
+	"kademlia/internal/contact"
+	"kademlia/internal/kademliaid"
+	"kademlia/internal/routingtable"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"kademlia/internal/kademliaid"
 )
 
 func TestCalcDistance(t *testing.T) {
@@ -69,4 +71,19 @@ func TestNewRandomKademliaID(t *testing.T) {
 	id := kademliaid.NewRandomKademliaID()
 	assert.False(t, id.Equals(kademliaid.NewRandomKademliaID()))
 
+}
+
+func TestNewKademliaIDInRangeOfBucket(t *testing.T) {
+	id := kademliaid.NewRandomKademliaID()
+	addr := address.New("address")
+	rt := routingtable.NewRoutingTable(contact.NewContact(id, addr))
+	// should return a valid id for all the 160 buckets
+	// keep in mind that the routing tables GetBucketIndex will say that an id
+	// which differs on all bits is in bucket with index 0 so the order of the
+	// buckets is reversed from the description in the paper
+	for i := 0; i < kademliaid.IDLength*8; i++ {
+		newIdInRange := kademliaid.NewKademliaIDInRange(id, i)
+		bucket := rt.GetBucketIndex(newIdInRange)
+		assert.True(t, bucket == i)
+	}
 }
