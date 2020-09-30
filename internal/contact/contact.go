@@ -1,7 +1,6 @@
 package contact
 
 import (
-	"errors"
 	"fmt"
 	"kademlia/internal/address"
 	"kademlia/internal/kademliaid"
@@ -99,7 +98,7 @@ func SerializeContacts(contacts []Contact) string {
 func Deserialize(s *string) (error, *Contact) {
 	fields := strings.Split(*s, "!")
 	if len(fields) == 0 || len(fields) == 1 {
-		return errors.New("blabla"), nil
+		return fmt.Errorf(`Failed to deserialize data string: "%v"`, *s), nil
 	}
 	adr := address.New(fields[1])
 	return nil, &Contact{ID: kademliaid.FromString(fields[0]), Address: adr}
