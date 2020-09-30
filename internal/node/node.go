@@ -102,13 +102,12 @@ func (node *Node) probeAlpha(
 func deserializeContacts(data string, targetId *kademliaid.KademliaID) []*contact.Contact {
 	contacts := []*contact.Contact{}
 	for _, sContact := range strings.Split(data, " ") {
-		err, c := contact.Deserialize(&sContact)
-		if err == nil {
-			c.CalcDistance(targetId)
-			contacts = append(contacts, c)
-		} else {
-			log.Warn().Msgf("Failed to deserialize contact: %s", err)
-			log.Print(sContact)
+		if sContact != "" {
+			err, c := contact.Deserialize(&sContact)
+			if err == nil {
+				c.CalcDistance(targetId)
+				contacts = append(contacts, c)
+			}
 		}
 	}
 	return contacts
@@ -130,7 +129,6 @@ func (node *Node) lookupContactHandleResponses(
 		go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
 			defer wg.Done()
 			data := <-(*channels)[i]
-
 			// parse contacts from response data
 			contactsMutex.Lock()
 			contacts = append(contacts, deserializeContacts(data, targetId)...)
