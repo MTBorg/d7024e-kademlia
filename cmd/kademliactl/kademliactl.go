@@ -15,7 +15,7 @@ func reader(wg *sync.WaitGroup, r io.Reader) {
 	defer wg.Done()
 
 	//TODO: Don't hardcode buffer size to 1024 bytes
-	buf := make([]byte, 2058)
+	buf := make([]byte, 10000)
 	n, err := r.Read(buf[:])
 	if err != nil {
 		return

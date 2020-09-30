@@ -25,8 +25,8 @@ type Node struct {
 	nodedata.NodeData
 }
 
-// Initialize the node by generating a NodeID and creating a new routing table
-// containing itself as a contact
+// Init initializes the node by generating a NodeID and creating a routing
+// table, data store and a RPC pool
 func (node *Node) Init(address *address.Address) {
 	id := kademliaid.NewRandomKademliaID()
 	me := contact.NewContact(id, address)
@@ -40,12 +40,34 @@ func (node *Node) Init(address *address.Address) {
 	}
 }
 
-// Join performs a node lookup on itself to join the network and fill its
-// routing table
+// JoinNetwork performs a node lookup on on the nodes own ID. It then refreshes
+// all of its buckets further away than the bucket its closest neighbour is in.
+//
 // TODO: Should maybe check that the node knows of another node in the network.
 // This is not a problem as long as the init script is used.
 func (node *Node) JoinNetwork() {
-	node.LookupContact(node.RoutingTable.GetMe().ID)
+	kClosest := node.LookupContact(node.RoutingTable.GetMe().ID)
+	if len(kClosest) == 0 {
+		log.Error().Msg("Failed to join network: Lookup on self resulted in no contacts")
+		return
+	}
+
+	// Refresh all buckets further away than the closest neighbour. The first
+	// contact will be in the closest neihbour bucket since the list is sorted.
+	// Note that the contacts in bucket 0 is the furthest away
+	CNBucket := node.RoutingTable.GetBucketIndex(kClosest[0].ID)
+	log.Trace().Str("CNBucket", fmt.Sprint(CNBucket)).Msg("Found CNBucket")
+	for i := CNBucket - 1; i >= 0; i-- {
+		node.RefreshBucket(i)
+	}
+}
+
+// RefreshBucket refreshes bucket nr bucketIndex by performing a LookupContact
+// on a random ID inside the range of the bucket
+func (node *Node) RefreshBucket(bucketIndex int) {
+	id := kademliaid.NewKademliaIDInRange(node.ID, bucketIndex)
+	log.Trace().Str("Bucket", fmt.Sprint(bucketIndex)).Str("IDInRange", id.String()).Msg("Refreshing bucket")
+	node.LookupContact(id)
 }
 
 // Probes at most alpha nodes from the shortlist with content
@@ -197,7 +219,8 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	}
 
 	sl := shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
-	channels := make([]chan string, alpha)
+	// might need more than alpha channels on final probe is closest did not change
+	channels := make([]chan string, k)
 
 	// iterative lookup until the search becomes stale
 	for {
@@ -256,11 +279,13 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 
 	sl := shortlist.NewShortlist(hash, node.FindKClosest(hash, nil, alpha))
 
+	// might need more than alpha channels on final probe is closest did not change
+	channels := make([]chan string, k)
+
 	// iterative lookup until the search becomes stale and no closer node
 	// can be found
 	result := ""
 	for {
-		channels := make([]chan string, alpha)
 		closestSoFar := sl.Closest
 
 		numProbed, rpcIDs := node.probeAlpha(sl, &channels, fmt.Sprintf("FIND_VALUE %s", hash.String()), alpha)
