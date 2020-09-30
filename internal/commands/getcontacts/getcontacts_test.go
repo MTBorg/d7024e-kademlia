@@ -20,10 +20,11 @@ func TestParseOptions(t *testing.T) {
 func TestExecute(t *testing.T) {
 	var getcsCmd *getcontacts.GetContacts
 
-	// should return message informing that the routingtable is empty
+	// should indicate that the node is not initialized if the routing table
+	// does not exist
 	node := node.Node{}
 	res, err := getcsCmd.Execute(&node)
-	assert.Equal(t, "Empty! Please, populate the routingtable...", res)
+	assert.Equal(t, "The node is not initilized, it does not contain a routing table or any contacts", res)
 	assert.Nil(t, err)
 }
 
