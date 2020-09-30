@@ -5,6 +5,7 @@ import (
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/routingtable"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,11 +22,19 @@ func TestCalcDistance(t *testing.T) {
 }
 
 func TestLess(t *testing.T) {
-
-	// should return false
-	id := kademliaid.NewRandomKademliaID()
-	id2 := id
+	// should return false if the id is not closer
+	id := kademliaid.FromString(strings.Repeat("F", 40))
+	id2 := kademliaid.FromString(strings.Repeat("F", 39) + "0")
 	assert.False(t, id.Less(id2))
+
+	// should return true if the id is closer
+	id = kademliaid.FromString(strings.Repeat("F", 39) + "0")
+	id2 = kademliaid.FromString(strings.Repeat("F", 40))
+	assert.True(t, id.Less(id2))
+
+	// should return even if the two ids are the same
+	id2 = kademliaid.FromString(strings.Repeat("F", 39) + "0")
+	assert.False(t, id2.Less(id2))
 
 }
 
