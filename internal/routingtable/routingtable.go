@@ -84,21 +84,33 @@ func (routingTable *RoutingTable) FindClosestContacts(target *kademliaid.Kademli
 	return candidates.GetContacts(count)
 }
 
-// GetContacts returns a newline string with contacts in the nodes routingtable
+// GetContacts returns a string with contacts in the nodes routingtable, the
+// contacts are printed with the bucket they reside in. The bucket number
+// have been converted so that bucket 0 is the bucket with contacts of inside
+// the range 2^0 to 2^1 from the node
 func (routingTable *RoutingTable) GetContacts() string {
-	s := ""
 	if routingTable == nil {
-		return "Empty! Please, populate the routingtable..."
+		return "The node is not initilized, it does not contain a routing table or any contacts"
 	}
-	for _, bucket := range routingTable.buckets {
+	s := "\nContacts:\n"
+	numContacts := 0
+	for i, bucket := range routingTable.buckets {
 		if bucket != nil && bucket.Len() > 0 {
-			s += fmt.Sprintf("%+v\n", bucket.GetContactAndCalcDistance(routingTable.me.ID))
-
+			convertedBucketIndex := 160 - i
+			s += fmt.Sprintf(
+				"\nBucket %d:\n",
+				convertedBucketIndex,
+			)
+			contacts := bucket.GetContactAndCalcDistance(routingTable.me.ID)
+			numContacts += len(contacts)
+			for _, c := range contacts {
+				s += fmt.Sprintf("%s\n", c.String())
+			}
 		}
+
 	}
-
+	s += fmt.Sprintf("\nEnd of contacts.\nTotal number of contacts: %d", numContacts)
 	return s
-
 }
 
 // getBucketIndex get the correct Bucket index for the KademliaID

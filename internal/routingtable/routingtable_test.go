@@ -19,7 +19,6 @@ func TestNewRoutingTable(t *testing.T) {
 	c := contact.NewContact(id, adr)
 	rt := routingtable.NewRoutingTable(c)
 	assert.NotNil(t, rt)
-	assert.Equal(t, "", rt.GetContacts())
 }
 
 func TestAddContact(t *testing.T) {
@@ -31,7 +30,7 @@ func TestAddContact(t *testing.T) {
 
 	// should be empty string
 	rt.AddContact(c)
-	assert.Equal(t, "", rt.GetContacts())
+	assert.Equal(t, "\nContacts:\n\nEnd of contacts.\nTotal number of contacts: 0", rt.GetContacts())
 
 	// should not be empty string
 	id = kademliaid.NewRandomKademliaID()
@@ -57,8 +56,8 @@ func TestFindClosestContacts(t *testing.T) {
 
 func TestGetContacts(t *testing.T) {
 	node := node.Node{}
-	// should return message informing that the routingtable is empty
-	assert.Equal(t, "Empty! Please, populate the routingtable...", node.RoutingTable.GetContacts())
+	// should return message informing that the routingtable does not exist
+	assert.Equal(t, "The node is not initilized, it does not contain a routing table or any contacts", node.RoutingTable.GetContacts())
 
 	// should return a contact in newline string format
 	id := kademliaid.NewRandomKademliaID()
