@@ -19,6 +19,10 @@ services:
         window: 10s
     networks:
       - kademlia_network
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - K=5
+      - ALPHA=3
       
 networks:
   kademlia_network:
