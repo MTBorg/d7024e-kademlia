@@ -31,6 +31,20 @@ Then run
 docker stack deploy --compose-file <compose-file> kademlia
 ```
 
+### Initilizing the nodes
+
+To initilize the nodes running in the containers once you have a single or
+multiple containers running can be done by executing the following script
+
+```bash
+sh scripts/init-cluster.sh
+```
+
+This script makes sure that every node except one has the same known node in
+its routing table (the known node is the only member of the Kademlia network at
+this point) each node then joins the network, one at a time, using the known
+node.
+
 ### Executing commands
 
 Any node can told to execute any command by running the following
