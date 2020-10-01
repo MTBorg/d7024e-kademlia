@@ -18,8 +18,9 @@ known_node_ip="$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.
 known_node_kadid="$(docker exec -it $known_node_cid kademliactl getid | sed -ne 's/^.*response: //p')" 
 for id in $cont_ids; do
   if [ "$id" != "$known_node_cid" ]; then
-    docker exec -it $id kademliactl addcontact "$known_node_kadid" "$known_node_ip" > /dev/null
-    docker exec -it $id kademliactl join > /dev/null
+    docker exec -it $id sh -c "\
+			kademliactl addcontact "$known_node_kadid" "$known_node_ip" && \
+			kademliactl join" > /dev/null
   fi
 done
 
