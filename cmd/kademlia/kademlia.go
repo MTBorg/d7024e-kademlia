@@ -29,7 +29,13 @@ func getHostIP() string {
 }
 
 func main() {
-	logger.InitLogger(os.Getenv("LOG_LEVEL"))
+	logLevel := os.Getenv("LOG_LEVEL")
+	if err := logger.InitLogger(logLevel); err == nil {
+		log.Info().Str("Level", logLevel).Msg("Log level set")
+	} else {
+		log.Error().Str("Level", logLevel).Msg("Failed to parse log level, defaulting to info level...")
+	}
+
 	host, err := os.Hostname()
 	ip := getHostIP()
 	if err != nil {
