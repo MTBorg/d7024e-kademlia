@@ -33,10 +33,8 @@ func (pool *RPCPool) Delete(rpcId *kademliaid.KademliaID) {
 	delete(pool.entries, *rpcId)
 }
 
-func (pool *RPCPool) Lock() {
+func (pool *RPCPool) WithLock(f func()) {
 	pool.lock.Lock()
-}
-
-func (pool *RPCPool) Unlock() {
+	f()
 	pool.lock.Unlock()
 }

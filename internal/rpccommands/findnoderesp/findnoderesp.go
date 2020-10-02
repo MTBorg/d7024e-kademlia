@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
+	"kademlia/internal/rpcpool"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -20,9 +21,10 @@ func New(rpcId *kademliaid.KademliaID) *FindNodeResp {
 
 func (fnResp *FindNodeResp) Execute(node *node.Node) {
 	log.Trace().Msg("Executing FIND_NODE_RESPONSE RPC")
-	node.RPCPool.Lock()
-	entry := node.NodeData.RPCPool.GetEntry(fnResp.rpcId)
-	node.RPCPool.Unlock()
+	var entry *rpcpool.Entry
+	node.RPCPool.WithLock(func() {
+		entry = node.NodeData.RPCPool.GetEntry(fnResp.rpcId)
+	})
 	if entry != nil {
 		log.Trace().Str("rpcID", fnResp.rpcId.String()).Msg("Writing to channel with rpcID")
 		entry.Channel <- *fnResp.data

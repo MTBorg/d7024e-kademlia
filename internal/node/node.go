@@ -98,10 +98,11 @@ func (node *Node) probeAlpha(
 			sl.Entries[i].Probed = true
 			rpc := node.NewRPC(content, sl.Entries[i].Contact.Address)
 
-			node.RPCPool.Lock()
-			node.RPCPool.Add(rpc.RPCId)
-			entryRPC := node.RPCPool.GetEntry(rpc.RPCId)
-			node.RPCPool.Unlock()
+			var entryRPC *rpcpool.Entry
+			node.RPCPool.WithLock(func() {
+				node.RPCPool.Add(rpc.RPCId)
+				entryRPC = node.RPCPool.GetEntry(rpc.RPCId)
+			})
 
 			rpcIds = append(rpcIds, rpc.RPCId)
 			(*channels)[numProbed] = entryRPC.Channel
@@ -150,11 +151,11 @@ func (node *Node) lookupContactHandleResponses(
 	}
 	wg.Wait()
 
-	node.RPCPool.Lock()
-	for i := 0; i < numProbed; i++ {
-		node.RPCPool.Delete(rpcIds[i])
-	}
-	node.RPCPool.Unlock()
+	node.RPCPool.WithLock(func() {
+		for i := 0; i < numProbed; i++ {
+			node.RPCPool.Delete(rpcIds[i])
+		}
+	})
 
 	for _, contact := range contacts {
 		sl.Add(contact)
@@ -202,11 +203,11 @@ func (node *Node) lookupDataHandleResponses(sl *shortlist.Shortlist,
 	}
 	wg.Wait()
 
-	node.RPCPool.Lock()
-	for i := 0; i < numProbed; i++ {
-		node.RPCPool.Delete(rpcIds[i])
-	}
-	node.RPCPool.Unlock()
+	node.RPCPool.WithLock(func() {
+		for i := 0; i < numProbed; i++ {
+			node.RPCPool.Delete(rpcIds[i])
+		}
+	})
 
 	for _, c := range contacts {
 		sl.Add(c)

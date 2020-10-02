@@ -4,6 +4,7 @@ import (
 	"errors"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
+	"kademlia/internal/rpcpool"
 	"regexp"
 	"strings"
 
@@ -22,9 +23,10 @@ func New(senderId *kademliaid.KademliaID, rpcId *kademliaid.KademliaID) *FindVal
 
 func (findresp *FindValueResp) Execute(node *node.Node) {
 	log.Trace().Msg("Executing FIND_VALUE_RESP RPC")
-	node.RPCPool.Lock()
-	entry := node.RPCPool.GetEntry(findresp.rpcId)
-	node.RPCPool.Unlock()
+	var entry *rpcpool.Entry
+	node.RPCPool.WithLock(func() {
+		entry = node.RPCPool.GetEntry(findresp.rpcId)
+	})
 	if entry != nil {
 		if match, _ := regexp.MatchString("VALUE=.*", findresp.content); match { // Value was found
 			entry.Channel <- findresp.content + "/SENDERID=" + findresp.senderId.String()
