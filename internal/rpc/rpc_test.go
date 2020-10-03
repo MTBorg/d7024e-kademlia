@@ -17,8 +17,8 @@ type SenderMock struct {
 	mock.Mock
 }
 
-func (m *SenderMock) Send(data string) error {
-	args := m.Called(data)
+func (m *SenderMock) Send(data string, target *address.Address) error {
+	args := m.Called(data, target)
 	return args.Error(0)
 }
 
@@ -74,15 +74,15 @@ func TestSend(t *testing.T) {
 
 	// Should return the error from send if there was an error
 	senderMock = new(SenderMock)
-	senderMock.On("Send", rpcSerialized).Return(errors.New("this is an error"))
-	err = rpc.Send(senderMock)
+	senderMock.On("Send", rpcSerialized, adr).Return(errors.New("this is an error"))
+	err = rpc.Send(senderMock, adr)
 	assert.Equal(t, err, errors.New("this is an error"))
 	senderMock.AssertExpectations(t)
 
 	// Should return nil if send does not return an error
 	senderMock = new(SenderMock)
-	senderMock.On("Send", rpcSerialized).Return(nil)
-	err = rpc.Send(senderMock)
+	senderMock.On("Send", rpcSerialized, adr).Return(nil)
+	err = rpc.Send(senderMock, adr)
 	assert.NoError(t, err)
 	senderMock.AssertExpectations(t)
 }

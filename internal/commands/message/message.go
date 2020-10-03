@@ -5,7 +5,6 @@ import (
 	"kademlia/internal/address"
 	"kademlia/internal/node"
 	kademliaMessage "kademlia/internal/rpc"
-	"kademlia/internal/udpsender"
 
 	"github.com/rs/zerolog/log"
 )
@@ -19,14 +18,13 @@ func (msg Message) Execute(node *node.Node) (string, error) {
 	log.Trace().Str("Target", msg.Target).Msg("Executing message command")
 	adr := address.New(msg.Target)
 	message := kademliaMessage.New(node.ID, msg.Content, adr)
-	udpSender := udpsender.New(adr)
-	err := message.Send(udpSender)
+	err := message.Send(node.Network.UdpSender, message.Target)
 
 	if err != nil {
 		log.Error().Msgf("Failed to write message to UDP: %s", err.Error())
-		log.Info().Str("Address", msg.Target).Str("Content", msg.Content).Msg("Message sent to address")
+		return "", err
 	}
-
+	log.Info().Str("Address", msg.Target).Str("Content", msg.Content).Msg("Message sent to address")
 	return "Message sent!", nil
 }
 

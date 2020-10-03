@@ -3,7 +3,6 @@ package ping
 import (
 	"errors"
 	"kademlia/internal/address"
-	"kademlia/internal/network"
 	"kademlia/internal/node"
 
 	"github.com/rs/zerolog/log"
@@ -16,7 +15,7 @@ type Ping struct {
 func (p Ping) Execute(node *node.Node) (string, error) {
 	log.Trace().Str("Target", p.Target).Msg("Executing ping command")
 	adr := address.New(p.Target)
-	network.Net.SendPingMessage(node.ID, adr)
+	node.Network.SendPingMessage(node.ID, adr)
 
 	return "Ping sent!", nil
 

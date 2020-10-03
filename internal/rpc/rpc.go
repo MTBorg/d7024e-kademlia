@@ -17,7 +17,7 @@ type RPC struct {
 }
 
 type Sender interface {
-	Send(string) error
+	Send(data string, target *address.Address) error
 }
 
 func New(senderId *kademliaid.KademliaID, content string, target *address.Address) RPC {
@@ -38,8 +38,8 @@ func NewWithID(senderId *kademliaid.KademliaID, content string, target *address.
 }
 
 // Sends the message using the send function
-func (rpc *RPC) Send(sender Sender) error {
-	return sender.Send(rpc.serialize())
+func (rpc *RPC) Send(sender Sender, target *address.Address) error {
+	return sender.Send(rpc.serialize(), target)
 }
 
 func (rpc *RPC) serialize() string {

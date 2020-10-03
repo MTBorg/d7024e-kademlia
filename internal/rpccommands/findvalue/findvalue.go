@@ -4,7 +4,6 @@ import (
 	"errors"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
-	"kademlia/internal/network"
 	"kademlia/internal/node"
 	"os"
 	"strconv"
@@ -28,7 +27,7 @@ func (find *FindValue) Execute(node *node.Node) {
 	if value := node.DataStore.Get(*find.hash); value != "" {
 		log.Debug().Str("Value", value).Str("Hash", find.hash.String()).Msg("Found key")
 		s := "VALUE=" + value
-		network.Net.SendFindDataRespMessage(node.ID, find.requestor.Address, find.rpcId, &s)
+		node.Network.SendFindDataRespMessage(node.ID, find.requestor.Address, find.rpcId, &s)
 	} else {
 
 		k, err := strconv.Atoi(os.Getenv("K"))
@@ -38,7 +37,7 @@ func (find *FindValue) Execute(node *node.Node) {
 		log.Debug().Str("Hash", find.hash.String()).Msg("Did not find key")
 		closest := node.FindKClosest(find.hash, find.requestor.ID, k)
 		data := contact.SerializeContacts(closest)
-		network.Net.SendFindDataRespMessage(node.ID, find.requestor.Address, find.rpcId, &data)
+		node.Network.SendFindDataRespMessage(node.ID, find.requestor.Address, find.rpcId, &data)
 	}
 }
 

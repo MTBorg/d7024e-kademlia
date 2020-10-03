@@ -1,6 +1,7 @@
 package message_test
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/commands/message"
 	"kademlia/internal/node"
 	"testing"
@@ -9,12 +10,20 @@ import (
 )
 
 func TestExecute(t *testing.T) {
-	// should return a string and not an error
 	node := &node.Node{}
+	node.Init(address.New("127.0.0.1:1234"))
 	msg := message.Message{}
+
+	// should be able to send a message to a valid target
+	msg.ParseOptions([]string{"127.0.0.1:1337", "hejsan"})
 	resp, err := msg.Execute(node)
 	assert.Nil(t, err)
 	assert.Equal(t, "Message sent!", resp)
+
+	// should not be able to send a message to an invalid target
+	msg.ParseOptions([]string{"123", "hello"})
+	resp, err = msg.Execute(node)
+	assert.Error(t, err)
 }
 
 func TestParseOptions(t *testing.T) {

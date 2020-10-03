@@ -4,7 +4,6 @@ import (
 	"errors"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
-	"kademlia/internal/network"
 	"kademlia/internal/node"
 	"os"
 	"strconv"
@@ -33,7 +32,7 @@ func (fn *FindNode) Execute(node *node.Node) {
 	// Respond with k closest nodes to the key
 	kClosest := node.FindKClosest(kademliaid.FromString(*fn.id), fn.requestor.ID, k)
 	content := contact.SerializeContacts(kClosest)
-	network.Net.SendFindContactRespMessage(node.ID, fn.requestor.Address, fn.rpcId, &content)
+	node.Network.SendFindContactRespMessage(node.ID, fn.requestor.Address, fn.rpcId, &content)
 }
 
 func (fn *FindNode) ParseOptions(options *[]string) error {

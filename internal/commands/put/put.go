@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/rs/zerolog/log"
 	"kademlia/internal/kademliaid"
-	"kademlia/internal/network"
 	"kademlia/internal/node"
 	"strings"
 )
@@ -24,7 +23,7 @@ func (put *Put) Execute(node *node.Node) (string, error) {
 
 	// Send STORE RPCs
 	for _, closeNode := range closestNodes {
-		network.Net.SendStoreMessage(node.ID, closeNode.Address, []byte(put.fileContent))
+		node.Network.SendStoreMessage(node.ID, closeNode.Address, []byte(put.fileContent))
 	}
 
 	return key.String(), nil

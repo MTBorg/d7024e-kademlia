@@ -1,6 +1,7 @@
 package ping_test
 
 import (
+	"kademlia/internal/address"
 	"kademlia/internal/commands/ping"
 	"kademlia/internal/node"
 	"testing"
@@ -10,7 +11,9 @@ import (
 
 func TestExecute(t *testing.T) {
 	// should return a string and not an error
+	addr := address.New("127.0.0.1:1234")
 	node := &node.Node{}
+	node.Init(addr)
 	ping := ping.Ping{}
 	resp, err := ping.Execute(node)
 	assert.Nil(t, err)
