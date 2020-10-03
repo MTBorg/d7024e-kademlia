@@ -13,6 +13,7 @@ import (
 	"kademlia/internal/rpc"
 	"kademlia/internal/rpcpool"
 	"kademlia/internal/shortlist"
+	"kademlia/internal/udpsender"
 	"os"
 	"regexp"
 	"strconv"
@@ -32,6 +33,10 @@ func (node *Node) Init(address *address.Address) {
 	id := kademliaid.NewRandomKademliaID()
 	me := contact.NewContact(id, address)
 	refreshTimers := []*refreshtimer.RefreshTimer{}
+	udpSender, err := udpsender.New()
+	if err != nil {
+		log.Fatal().Str("Error", err.Error()).Msg("Failed to initialize ndoe")
+	}
 	*node = Node{
 		NodeData: nodedata.NodeData{
 			RoutingTable:  routingtable.NewRoutingTable(me),
@@ -39,6 +44,7 @@ func (node *Node) Init(address *address.Address) {
 			ID:            id,
 			RPCPool:       rpcpool.New(),
 			RefreshTimers: refreshTimers,
+			Network:       network.Network{UdpSender: udpSender},
 		},
 	}
 
@@ -107,7 +113,7 @@ func (node *Node) probeAlpha(
 			rpcIds = append(rpcIds, rpc.RPCId)
 			(*channels)[numProbed] = entryRPC.Channel
 			numProbed++
-			network.Net.SendFindContactMessage(&rpc)
+			node.Network.SendFindContactMessage(&rpc)
 		}
 	}
 	return numProbed, rpcIds
