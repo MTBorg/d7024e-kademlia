@@ -23,6 +23,8 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - K=5
       - ALPHA=3
+      - LISTEN_PORT=1776
+      - SEND_PORT=1777
       
 networks:
   kademlia_network:

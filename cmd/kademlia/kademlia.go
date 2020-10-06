@@ -7,6 +7,7 @@ import (
 	"kademlia/internal/udplistener"
 	"net"
 	"os"
+	"strconv"
 
 	"github.com/rs/zerolog/log"
 )
@@ -36,6 +37,11 @@ func main() {
 		log.Error().Str("Level", logLevel).Msg("Failed to parse log level, defaulting to info level...")
 	}
 
+	lport, err := strconv.Atoi(os.Getenv("LISTEN_PORT"))
+	if err != nil {
+		log.Error().Msgf("Failed to convert env variable LISTEN_PORT from string to int: %s", err)
+	}
+
 	host, err := os.Hostname()
 	ip := getHostIP()
 	if err != nil {
@@ -46,5 +52,5 @@ func main() {
 	node := node.Node{}
 
 	go cmdlistener.Listen(&node)
-	udplistener.Listen(ip, 1776, &node)
+	udplistener.Listen(ip, lport, &node)
 }

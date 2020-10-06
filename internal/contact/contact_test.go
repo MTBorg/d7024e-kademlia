@@ -50,5 +50,5 @@ func TestString(t *testing.T) {
 	id := kademliaid.FromString("1111111111111111111100000000000000000000")
 	adr := address.New("127.0.0.1")
 	c := contact.NewContact(id, adr)
-	assert.Equal(t, c.String(), "contact(\"1111111111111111111100000000000000000000\", \"127.0.0.1:1776\")")
+	assert.Equal(t, c.String(), "contact(\"1111111111111111111100000000000000000000\", \"127.0.0.1:\")")
 }

@@ -16,9 +16,12 @@ func TestNew(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
+
 	// should be equal
-	adr := address.New("127.0.0.1:1776")
-	assert.Equal(t, adr.String(), "127.0.0.1:1776")
+	adr := address.New("127.0.0.1:3000")
+	assert.Equal(t, adr.String(), "127.0.0.1:")
+	adr = address.New("127.0.0.1")
+	assert.Equal(t, adr.String(), "127.0.0.1:")
 
 }
 
@@ -31,8 +34,7 @@ func TestGetHost(t *testing.T) {
 
 func TestGetPortAsInt(t *testing.T) {
 
-	adr := address.New("127.0.0.1:1776")
-	port, err := adr.GetPortAsInt()
-	assert.Nil(t, err)
-	assert.Equal(t, port, 1776)
+	adr := address.New("127.0.0.1:3000")
+	port, _ := adr.GetPortAsInt()
+	assert.Equal(t, port, 0)
 }
