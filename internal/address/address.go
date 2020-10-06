@@ -1,7 +1,9 @@
 package address
 
 import (
+	"github.com/rs/zerolog/log"
 	"net"
+	"os"
 	"strconv"
 )
 
@@ -11,15 +13,21 @@ type Address struct {
 }
 
 func New(address string) *Address {
+	lport := os.Getenv("LISTEN_PORT")
 	host, port, err := net.SplitHostPort(address)
-	if err != nil {
-		if port == "" { // Assume address is correct if port is missing
-			host = address
-		}
+	if err != nil && port == "" {
+		host = net.ParseIP(address).String()
 	}
+
+	if host == "" {
+		log.Error().Msgf("Given address is not valid: %s", err)
+		return &Address{}
+
+	}
+
 	return &Address{
 		host: host,
-		port: "1776", // TODO: Don't hardcore, maybe use env var?
+		port: lport,
 	}
 }
 
