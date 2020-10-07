@@ -2,6 +2,7 @@ package main
 
 import (
 	"kademlia/internal/command/listener"
+	"kademlia/internal/http/listener"
 	"kademlia/internal/logger"
 	"kademlia/internal/node"
 	"kademlia/internal/udplistener"
@@ -52,5 +53,6 @@ func main() {
 	node := node.Node{}
 
 	go cmdlistener.Listen(&node)
+	go httplistener.Listen(&node)
 	udplistener.Listen(ip, lport, &node)
 }

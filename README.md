@@ -53,6 +53,25 @@ Any node can told to execute any command by running the following
 docker exec -ti <container-name/id> kademliactl <command>
 ```
 
+### REST API
+All nodes support the following REST API,
+
+##### Method: `GET`, endpoint: `/objects/{hash}/`:
+The {hash} portion of the HTTP path is to be substituted for the hash of the object. A successful call should result in the contents of the object being responded with.
+
+Example:
+```
+curl <container-ip>:8080/objects/<hash>
+```
+
+##### Method: `POST`, endpoint: `/objects`:
+Each message sent to the endpoint must contain a data object in its HTTP body. If the operation is successful, the node will reply with 201 CREATED containing both the contents of the uploaded object and a Location: /objects/{hash} header, where {hash} will be substituted for the hash of the uploaded object.
+
+Example:
+```
+curl -X POST <container-ip>:8080/objects -d "<content>"
+```
+
 ### Setting log level
 
 The containers source the log level from the `LOG_LEVEL` variable in the
