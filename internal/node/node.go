@@ -41,6 +41,14 @@ func (node *Node) Init(address *address.Address) {
 			RefreshTimers: refreshTimers,
 		},
 	}
+
+	// start new refresh timers for each bucket, skip last bucket since no node
+	// will be in it whp
+	for i := 0; i < kademliaid.IDLength*8-1; i++ {
+		rt := refreshtimer.NewRefreshTimer(i)
+		node.RefreshTimers = append(node.RefreshTimers, rt)
+		rt.StartRefreshTimer(node.RefreshBucket)
+	}
 }
 
 // JoinNetwork performs a node lookup on on the nodes own ID. It then refreshes
@@ -49,13 +57,6 @@ func (node *Node) Init(address *address.Address) {
 // TODO: Should maybe check that the node knows of another node in the network.
 // This is not a problem as long as the init script is used.
 func (node *Node) JoinNetwork() {
-	// start new refresh timers for each bucket, skip last bucket since no node
-	// will be in it whp
-	for i := 0; i < kademliaid.IDLength*8-1; i++ {
-		rt := refreshtimer.NewRefreshTimer(i)
-		node.RefreshTimers = append(node.RefreshTimers, rt)
-		rt.StartRefreshTimer(node.RefreshBucket)
-	}
 
 	// lookup on self
 	kClosest := node.LookupContact(node.RoutingTable.GetMe().ID)

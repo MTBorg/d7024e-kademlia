@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type DataMap = map[kademliaid.KademliaID]Data
+type DataMap = map[kademliaid.KademliaID]*Data
 
 type DataStore struct {
 	store DataMap
@@ -30,7 +30,7 @@ func (d *DataStore) Insert(value string) {
 	data := Data{}
 	data.value = value
 	data.restart = make(chan bool)
-	d.store[id] = data
+	d.store[id] = &data
 	d.StartRefreshTimer(data) // If successful insert, we start the TTL
 
 }
@@ -40,8 +40,13 @@ func (d *DataStore) Insert(value string) {
 // language and should never have been invented.
 func (d *DataStore) Get(key kademliaid.KademliaID) string {
 	data := d.store[key]
-	d.RestartRefreshTimer(data) // Data is requested
-	return data.value
+	if data != nil {
+		d.RestartRefreshTimer(*data)
+		return data.value
+
+	}
+	return ""
+
 }
 
 // Drop removes the data from the store
@@ -65,7 +70,7 @@ func (d *DataStore) EntriesAsString() string {
 	if len(d.store) != 0 {
 		s = "map("
 		for key, element := range d.store {
-			s = fmt.Sprintf("%s \n %x=%s", s, key, element) // TODO: map is now storing the data obj and not a string!
+			s = fmt.Sprintf("%s \n %x=%s", s, key, element.value)
 		}
 		s += "\n)"
 	} else {
@@ -77,18 +82,22 @@ func (d *DataStore) EntriesAsString() string {
 func (d *DataStore) StartRefreshTimer(data Data) {
 	go func() {
 		for {
+			// t := time.Second * 10
 			t := time.Hour
 			select {
 			case <-data.restart:
 				log.Trace().Str("Data", data.value).Msg("Restarted data refresh timer")
 			case <-time.After(t):
 				log.Trace().Str("Data", data.value).Msg("No refresh done on data, data is silently deleted...")
-				go d.Drop(data.value)
+				d.Drop(data.value)
+				return
 			}
 		}
+
 	}()
 }
 
 func (d *DataStore) RestartRefreshTimer(data Data) {
 	data.restart <- true // restart the refresh timer
+
 }
