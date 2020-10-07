@@ -21,7 +21,7 @@ type RoutingTable struct {
 func NewRoutingTable(me contact.Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < kademliaid.IDLength*8; i++ {
-		routingTable.buckets[i] = bucket.NewBucket()
+		routingTable.buckets[i] = bucket.NewBucket(me.ID)
 	}
 	routingTable.me = me
 	return routingTable

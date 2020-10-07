@@ -29,15 +29,15 @@ func (network *Network) SendPongMessage(senderId *kademliaid.KademliaID, target 
 }
 
 // SendPingMessage sends a "PING" message to a remote address
-func (network *Network) SendPingMessage(senderId *kademliaid.KademliaID, target *address.Address) {
-	rpc := rpc.New(senderId, "PING", target)
-	udpSender := udpsender.New(target)
+func (network *Network) SendPingMessage(rpc *rpc.RPC) {
+	//rpc := rpc.New(senderId, "PING", target)
+	udpSender := udpsender.New(rpc.Target)
 
 	err := rpc.Send(udpSender)
 	if err != nil {
 		log.Error().Msgf("Failed to write RPC PING message to UDP: %s", err.Error())
 	}
-	log.Debug().Str("Target", target.String()).Msg("Sent PING to target")
+	log.Debug().Str("Target", rpc.Target.String()).Msg("Sent PING to target")
 }
 
 func (network *Network) SendFindContactMessage(rpc *rpc.RPC) {
