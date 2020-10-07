@@ -40,6 +40,11 @@ func TestNewShortlist(t *testing.T) {
 	for i := 0; i < k; i++ {
 		assert.False(t, sl.Entries[i].Active)
 	}
+
+	// should not be marked as returned value
+	for i := 0; i < k; i++ {
+		assert.False(t, sl.Entries[i].ReturnedValue)
+	}
 }
 
 func TestLen(t *testing.T) {
@@ -104,4 +109,35 @@ func TestAdd(t *testing.T) {
 	c.CalcDistance(target)
 	sl.Add(&c)
 	assert.Equal(t, c, sl.Entries[0].Contact)
+
+	// Should be able to sort if list is not full
+	contacts = []contact.Contact{}
+	target = kademliaid.FromString(strings.Repeat("0", 40))
+	for i := 0; i < 1; i++ {
+		s := strconv.Itoa(i+1) + strings.Repeat("0", 39) // +1 to avoid all zeroes (equal to target)
+		contact := contact.NewContact(kademliaid.FromString(s), adr)
+		contact.CalcDistance(target)
+		contacts = append(contacts, contact)
+	}
+	sl = shortlist.NewShortlist(target, contacts)
+	c = contact.NewContact(kademliaid.FromString(strings.Repeat("0", 39)+"1"), adr)
+	c.CalcDistance(target)
+	sl.Add(&c)
+	assert.Equal(t, c, sl.Entries[0].Contact)
+}
+
+func TestGetContacts(t *testing.T) {
+	adr := address.New("127.0.0.1")
+	contacts := []contact.Contact{}
+	target := kademliaid.FromString(strings.Repeat("0", 40))
+	for i := 0; i < 4; i++ {
+		s := strconv.Itoa(i+1) + strings.Repeat("0", 39) // +1 to avoid all zeroes (equal to target)
+		contact := contact.NewContact(kademliaid.FromString(s), adr)
+		contact.CalcDistance(target)
+		contacts = append(contacts, contact)
+	}
+	sl := shortlist.NewShortlist(target, contacts)
+
+	cs := sl.GetContacts()
+	assert.Equal(t, 4, len(cs))
 }

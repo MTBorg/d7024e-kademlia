@@ -21,5 +21,5 @@ func (p *Storage) ParseOptions(options []string) error {
 }
 
 func (p *Storage) PrintUsage() string {
-	return "Usage: data"
+	return "Usage: storage"
 }

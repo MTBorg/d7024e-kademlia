@@ -9,6 +9,8 @@ import (
 	"kademlia/internal/rpccommand"
 	"kademlia/internal/rpccommands/findnode"
 	"kademlia/internal/rpccommands/findnoderesp"
+	"kademlia/internal/rpccommands/findvalue"
+	"kademlia/internal/rpccommands/findvalueresp"
 	"kademlia/internal/rpccommands/ping"
 	"kademlia/internal/rpccommands/pong"
 	"kademlia/internal/rpccommands/store"
@@ -54,6 +56,18 @@ func TestParseRPC(t *testing.T) {
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.Nil(t, err)
 	assert.IsType(t, &findenoderesp.FindNodeResp{}, rpcCmd)
+
+	// Should be able to parse a FIND_VALUE RPC
+	r = rpc.New(senderId, "FIND_VALUE", adr)
+	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
+	assert.Nil(t, err)
+	assert.IsType(t, &findvalue.FindValue{}, rpcCmd)
+
+	// Should be able to parse a FIND_VALUE_RESPONSE RPC
+	r = rpc.New(senderId, "FIND_VALUE_RESP", adr)
+	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
+	assert.Nil(t, err)
+	assert.IsType(t, &findvalueresp.FindValueResp{}, rpcCmd)
 
 	//Should not parse an unknown RPC
 	r = rpc.New(senderId, "HELLO", adr)

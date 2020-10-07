@@ -47,7 +47,7 @@ func TestExecute(t *testing.T) {
 	id := kademliaid.NewRandomKademliaID().String()
 	addcCmd.ParseOptions([]string{id, "127.0.0.1:1776"})
 	res, err := addcCmd.Execute(&node)
-	assert.Equal(t, "Contact added: 127.0.0.1:", res)
+	assert.Equal(t, "Contact added: 127.0.0.1:1776", res)
 	assert.Nil(t, err)
 }
 

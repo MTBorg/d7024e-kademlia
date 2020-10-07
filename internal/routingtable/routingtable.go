@@ -14,14 +14,14 @@ const bucketSize = 20
 // keeps a refrence contact of me and an array of buckets
 type RoutingTable struct {
 	me      contact.Contact
-	buckets [kademliaid.IDLength * 8]*bucket.Bucket
+	Buckets [kademliaid.IDLength * 8]*bucket.Bucket
 }
 
 // NewRoutingTable returns a new instance of a RoutingTable
 func NewRoutingTable(me contact.Contact) *RoutingTable {
 	routingTable := &RoutingTable{}
 	for i := 0; i < kademliaid.IDLength*8; i++ {
-		routingTable.buckets[i] = bucket.NewBucket()
+		routingTable.Buckets[i] = bucket.NewBucket()
 	}
 	routingTable.me = me
 	return routingTable
@@ -36,7 +36,7 @@ func (routingTable *RoutingTable) GetMe() *contact.Contact {
 func (routingTable *RoutingTable) AddContact(contact contact.Contact) {
 	if contact.ID.Equals(routingTable.me.ID) != true {
 		bucketIndex := routingTable.GetBucketIndex(contact.ID)
-		bucket := routingTable.buckets[bucketIndex]
+		bucket := routingTable.Buckets[bucketIndex]
 		bucket.AddContact(contact)
 	} else {
 		log.Warn().Str("me", routingTable.me.String()).Str("contact", contact.String()).Msg("Tried to add self as contact")
@@ -47,27 +47,33 @@ func (routingTable *RoutingTable) AddContact(contact contact.Contact) {
 func (routingTable *RoutingTable) FindClosestContacts(target *kademliaid.KademliaID, requestorID *kademliaid.KademliaID, count int) []contact.Contact {
 	var candidates contact.ContactCandidates
 	bucketIndex := routingTable.GetBucketIndex(target)
-	bucket := routingTable.buckets[bucketIndex]
+	bucket := routingTable.Buckets[bucketIndex]
 
 	if requestorID != nil {
-		candidates.Append(bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID))
+		candidates.Append(
+			bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID),
+		)
 	} else {
 		candidates.Append(bucket.GetContactAndCalcDistance(target))
 	}
 
 	for i := 1; (bucketIndex-i >= 0 || bucketIndex+i < kademliaid.IDLength*8) && candidates.Len() < count; i++ {
 		if bucketIndex-i >= 0 {
-			bucket = routingTable.buckets[bucketIndex-i]
+			bucket = routingTable.Buckets[bucketIndex-i]
 			if requestorID != nil {
-				candidates.Append(bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID))
+				candidates.Append(
+					bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID),
+				)
 			} else {
 				candidates.Append(bucket.GetContactAndCalcDistance(target))
 			}
 		}
 		if bucketIndex+i < kademliaid.IDLength*8 {
-			bucket = routingTable.buckets[bucketIndex+i]
+			bucket = routingTable.Buckets[bucketIndex+i]
 			if requestorID != nil {
-				candidates.Append(bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID))
+				candidates.Append(
+					bucket.GetContactAndCalcDistanceNoRequestor(target, requestorID),
+				)
 			} else {
 				candidates.Append(bucket.GetContactAndCalcDistance(target))
 			}
@@ -93,7 +99,7 @@ func (routingTable *RoutingTable) GetContacts() string {
 	}
 	s := "\nContacts:\n"
 	numContacts := 0
-	for i, bucket := range routingTable.buckets {
+	for i, bucket := range routingTable.Buckets {
 		if bucket != nil && bucket.Len() > 0 {
 			convertedBucketIndex := 160 - i
 			s += fmt.Sprintf(
@@ -127,5 +133,5 @@ func (routingTable *RoutingTable) GetBucketIndex(id *kademliaid.KademliaID) int 
 }
 
 func (routingTable *RoutingTable) GetBucket(index int) *bucket.Bucket {
-	return routingTable.buckets[index]
+	return routingTable.Buckets[index]
 }

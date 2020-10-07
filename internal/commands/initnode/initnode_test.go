@@ -1,12 +1,11 @@
 package initnode_test
 
 import (
-	"testing"
-
 	"kademlia/internal/commands/initnode"
 	"kademlia/internal/node"
 
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestParseOptions(t *testing.T) {
@@ -31,14 +30,18 @@ func TestParseOptions(t *testing.T) {
 
 func TestExecute(t *testing.T) {
 	var initCmd *initnode.InitNode
+	addr := "127.0.1.2:1776"
 
 	// should initialize the node
 	initCmd = new(initnode.InitNode)
-	initCmd.ParseOptions([]string{"address"})
+	initCmd.ParseOptions([]string{addr})
 	node := node.Node{}
 	res, err := initCmd.Execute(&node)
-	assert.Equal(t, "Node initialized", res)
 	assert.Nil(t, err)
+	assert.Equal(t, "Node initialized", res)
+	// if the node was initialized the routing table should have the same address
+	// as the argument of the command
+	assert.Equal(t, addr, node.RoutingTable.GetMe().Address.String())
 }
 
 func TestPrintUsage(t *testing.T) {

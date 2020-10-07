@@ -2,6 +2,7 @@ package node_test
 
 import (
 	"kademlia/internal/address"
+	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
@@ -58,4 +59,26 @@ func TestInit(t *testing.T) {
 
 	// should initialize the node variables
 	assert.NotNil(t, node.RoutingTable)
+}
+
+func TestFindKClosest(t *testing.T) {
+	n := node.Node{}
+	addr := address.New("127.0.1.1")
+	n.Init(addr)
+	key := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffffff")
+	id1 := kademliaid.FromString("fffffffffffffffffffffffffffffffffffffff0")
+	id2 := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffff00")
+	id3 := kademliaid.FromString("fffffffffffffffffffffffffffffffffffff000")
+	c1 := contact.NewContact(id1, addr)
+	c2 := contact.NewContact(id2, addr)
+	c3 := contact.NewContact(id3, addr)
+	n.RoutingTable.AddContact(c1)
+	n.RoutingTable.AddContact(c2)
+	n.RoutingTable.AddContact(c3)
+
+	// should return the k closest contacts to the key without returning any
+	// contact with the same ID as the requestorID
+	kClosest := n.FindKClosest(key, id1, 3)
+	// contact c1 should not be returned since is has the same id as the requestor
+	assert.Equal(t, 2, len(kClosest))
 }

@@ -12,12 +12,11 @@ import (
 )
 
 func TestCalcDistance(t *testing.T) {
-	kadID := kademliaid.KademliaID{}
+	targetID := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffffff")
+	id1 := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffff00")
 
-	// should be equal because ids are the same
-	id := kademliaid.NewRandomKademliaID()
-	id2 := id
-	assert.Equal(t, &kadID, id.CalcDistance(id2))
+	// should calculate the correct distance using XOR metric
+	assert.Equal(t, kademliaid.FromString("00000000000000000000000000000000000000ff"), id1.CalcDistance(targetID))
 
 }
 
@@ -35,7 +34,6 @@ func TestLess(t *testing.T) {
 	// should return even if the two ids are the same
 	id2 = kademliaid.FromString(strings.Repeat("F", 39) + "0")
 	assert.False(t, id2.Less(id2))
-
 }
 
 func TestNewKademliaID(t *testing.T) {
