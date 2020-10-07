@@ -53,3 +53,17 @@ func TestEntriesAsString(t *testing.T) {
 	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%x=%s", kademliaid.NewKademliaID(&v1), v1))
 	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%x=%s", kademliaid.NewKademliaID(&v2), v2))
 }
+
+func TestDrop(t *testing.T) {
+	var d datastore.DataStore
+
+	d = datastore.New()
+	v1, v2 := "hello", "world"
+	d.Insert(v1)
+	d.Insert(v2)
+
+	// should delete the entry
+	d.Drop("hello")
+	assert.Equal(t, "", d.Get(kademliaid.NewKademliaID(&v1)))
+	assert.Equal(t, v2, d.Get(kademliaid.NewKademliaID(&v2)))
+}

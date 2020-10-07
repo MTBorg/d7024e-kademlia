@@ -21,6 +21,10 @@ func NewBucket() *Bucket {
 	return bucket
 }
 
+func (bucket *Bucket) GetBucketList() list.List {
+	return *bucket.list
+}
+
 // AddContact adds the Contact to the front of the bucket
 // or moves it to the front of the bucket if it already existed
 func (bucket *Bucket) AddContact(contact Contact) {

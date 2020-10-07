@@ -1,6 +1,7 @@
 package bucket_test
 
 import (
+	"container/list"
 	"kademlia/internal/address"
 	"kademlia/internal/bucket"
 	"kademlia/internal/contact"
@@ -11,26 +12,67 @@ import (
 )
 
 func TestNewBucket(t *testing.T) {
-	// should create a bucket
+	// should create a new and empty bucket
 	b := bucket.NewBucket()
 	assert.NotNil(t, b)
 	assert.Equal(t, b.Len(), 0)
 }
 
 func TestAddContact(t *testing.T) {
-	// shoud be the same contact
-	id := kademliaid.NewRandomKademliaID()
+	var b *bucket.Bucket
+	var bList list.List
 	adr := address.New("127.0.0.1")
+
+	// Adding a new contact to a non-full bucket
+	// should insert the new contact
+	id := kademliaid.NewRandomKademliaID()
 	c := contact.NewContact(id, adr)
-	b := bucket.NewBucket()
+	b = bucket.NewBucket()
 	b.AddContact(c)
-	contact := b.GetContactAndCalcDistance(id)[0]
-	assert.Equal(t, contact.ID, c.ID)
-	assert.Equal(t, contact.Address, c.Address)
+	bList = b.GetBucketList()
+	assert.Equal(t, bList.Front().Value.(contact.Contact).ID, c.ID)
+	assert.Equal(t, bList.Front().Value.(contact.Contact).Address, c.Address)
+
+	// Adding a new contact to a full bucket
+	b = bucket.NewBucket()
+	for i := 0; i < 20; i++ {
+		c = contact.NewContact(kademliaid.NewRandomKademliaID(), adr)
+		b.AddContact(c)
+	}
+	fullBucket := b.GetBucketList()
+	assert.Equal(t, fullBucket.Len(), 20)
+
+	// should not add the contact
+	newContact := contact.NewContact(kademliaid.NewRandomKademliaID(), adr)
+	b.AddContact(newContact)
+	newFullBucket := b.GetBucketList()
+	assert.Equal(t, newFullBucket.Len(), 20)
+	for i, j := newFullBucket.Front(), fullBucket.Front(); i != nil || j != nil; i, j = i.Next(), j.Next() {
+		assert.True(t, i.Value.(contact.Contact) == j.Value.(contact.Contact))
+	}
+
+	// Adding an already existing contact to the bucket
+	// should push the contact to the front of the bucket
+	b = bucket.NewBucket()
+	var testContact contact.Contact
+	for i := 0; i < 20; i++ {
+		c = contact.NewContact(kademliaid.NewRandomKademliaID(), adr)
+		b.AddContact(c)
+
+		if i == 0 {
+			testContact = c
+		}
+	}
+	bList = b.GetBucketList()
+	assert.Equal(t, bList.Len(), 20)
+
+	assert.False(t, bList.Front().Value.(contact.Contact) == testContact)
+	b.AddContact(testContact)
+	bList = b.GetBucketList()
+	assert.True(t, bList.Front().Value.(contact.Contact) == testContact)
 }
 
 func TestGetContactAndCalcDistance(t *testing.T) {
-
 	// should be the same id
 	id1 := kademliaid.FromString("1111111111111111111100000000000000000000")
 	id2 := kademliaid.FromString("0000000000000000000011111111111111111111")
@@ -51,7 +93,6 @@ func TestGetContactAndCalcDistance(t *testing.T) {
 }
 
 func TestGetContactAndCalcDistanceNoRequestor(t *testing.T) {
-
 	//should return the contacts
 	id1 := kademliaid.FromString("1111111111111111111100000000000000000000")
 	id2 := kademliaid.FromString("0000000000000000000011111111111111111111")

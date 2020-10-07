@@ -14,15 +14,18 @@ type Address struct {
 
 func New(address string) *Address {
 	lport := os.Getenv("LISTEN_PORT")
-	host, port, err := net.SplitHostPort(address)
-	if err != nil && port == "" {
-		host = net.ParseIP(address).String()
+	if lport == "" { // if the env var was not defined
+		lport = "1776"
 	}
 
-	if host == "" {
-		log.Error().Msgf("Given address is not valid: %s", err)
-		return &Address{}
-
+	host, port, err := net.SplitHostPort(address)
+	if err != nil && port == "" {
+		parsedHost := net.ParseIP(address)
+		if parsedHost == nil {
+			log.Error().Msgf("Given address is not valid: %s", err)
+			return &Address{}
+		}
+		host = parsedHost.String()
 	}
 
 	return &Address{
