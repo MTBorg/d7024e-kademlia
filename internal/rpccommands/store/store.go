@@ -14,7 +14,7 @@ type Store struct {
 
 func (store *Store) Execute(node *node.Node) {
 	log.Trace().Msg("Executing FIND_NODE RPC")
-	node.Store(&store.fileContent)
+	node.Store(&store.fileContent, nil, nil)
 }
 
 func (store *Store) ParseOptions(options *[]string) error {

@@ -21,7 +21,8 @@ func TestStore(t *testing.T) {
 	// should be equal
 	value := "TEST"
 	id := kademliaid.NewKademliaID(&value)
-	n.Store(&value)
+	contacts := &[]contact.Contact{}
+	n.Store(&value, contacts, nil)
 	assert.Equal(t, n.NodeData.DataStore.Get(id), "TEST")
 }
 

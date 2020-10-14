@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"kademlia/internal/address"
 	"kademlia/internal/commands/storage"
+	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
 	"testing"
@@ -20,7 +21,8 @@ func TestExecute(t *testing.T) {
 	n.Init(address.New("127.0.0.1"))
 	storedVal := "this is a test"
 	storedKey := kademliaid.NewKademliaID(&storedVal)
-	n.DataStore.Insert(storedVal)
+	contacts := &[]contact.Contact{}
+	n.DataStore.Insert(storedVal, contacts, nil, nil)
 	expected := fmt.Sprintf("map( \n %x=%s\n)", storedKey, storedVal)
 
 	// should return the nodes stored key-value pairs

@@ -7,11 +7,12 @@ import (
 	"kademlia/internal/rpc"
 	"kademlia/internal/rpccommand"
 	"kademlia/internal/rpccommands/findnode"
-	"kademlia/internal/rpccommands/findnoderesp"
+	findenoderesp "kademlia/internal/rpccommands/findnoderesp"
 	"kademlia/internal/rpccommands/findvalue"
 	"kademlia/internal/rpccommands/findvalueresp"
 	"kademlia/internal/rpccommands/ping"
 	"kademlia/internal/rpccommands/pong"
+	"kademlia/internal/rpccommands/refresh"
 	"kademlia/internal/rpccommands/store"
 	"strings"
 
@@ -35,6 +36,9 @@ func ParseRPC(requestor *contact.Contact, rpc *rpc.RPC) (rpccommand.RPCCommand, 
 	case "PONG":
 		rpcLog.Msg("PONG received")
 		cmd = pong.New()
+	case "REFRESH":
+		rpcLog.Msg("REFRESH received")
+		cmd = new(refresh.Refresh)
 	case "STORE":
 		rpcLog.Msg("STORE received")
 		cmd = new(store.Store)

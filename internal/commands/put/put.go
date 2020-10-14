@@ -2,10 +2,11 @@ package put
 
 import (
 	"errors"
-	"github.com/rs/zerolog/log"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Put struct {
@@ -19,7 +20,7 @@ func (put *Put) Execute(node *node.Node) (string, error) {
 	// closestNodes := node.FindKClosest(&key, nil, k)
 	closestNodes := node.LookupContact(&key)
 
-	node.Store(&put.fileContent)
+	node.Store(&put.fileContent, &closestNodes, node.RoutingTable.GetMe())
 
 	// Send STORE RPCs
 	for _, closeNode := range closestNodes {

@@ -1,4 +1,4 @@
-CONT_NAME="^kademlia_kademlia." # Common part of container names
+CONT_NAME="kademlia_kademlia." # Common part of container names
 
 echo "Initilizing all running Kademlia containers..."
 

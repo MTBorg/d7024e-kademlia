@@ -2,9 +2,13 @@ package datastore
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
+	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/rpc"
+	"kademlia/internal/udpsender"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type DataMap = map[kademliaid.KademliaID]*Data
@@ -14,8 +18,9 @@ type DataStore struct {
 }
 
 type Data struct {
-	value   string
-	restart chan bool
+	value    string
+	restart  chan bool
+	Contacts *[]contact.Contact
 }
 
 func New() DataStore {
@@ -25,14 +30,19 @@ func New() DataStore {
 // Insert a data into the store.
 // Uses SHA-1 hash of value as key.
 // Starts a TTL timer on the data
-func (d *DataStore) Insert(value string) {
+//
+// The originator parameter should point to the node's routingtable's me value,
+// i.e. this node's contact representation. If originator is nil, then that
+// means that the storage of the value was not initiated on this node, and thus
+// this node should not send REFRESH RPCs to the other nodes.
+func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator *contact.Contact, sender *udpsender.UDPSender) {
 	id := kademliaid.NewKademliaID(&value)
 	data := Data{}
 	data.value = value
 	data.restart = make(chan bool)
+	data.Contacts = contacts
 	d.store[id] = &data
-	d.StartRefreshTimer(data) // If successful insert, we start the TTL
-
+	d.StartRefreshTimer(data, originator, sender) // If successful insert, we start the TTL
 }
 
 // Gets the value from the store associated with the key.
@@ -79,25 +89,39 @@ func (d *DataStore) EntriesAsString() string {
 	return s
 }
 
-func (d *DataStore) StartRefreshTimer(data Data) {
+func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, sender *udpsender.UDPSender) {
 	go func() {
 		for {
-			// t := time.Second * 10
-			t := time.Hour
-			select {
-			case <-data.restart:
-				log.Trace().Str("Data", data.value).Msg("Restarted data refresh timer")
-			case <-time.After(t):
-				log.Trace().Str("Data", data.value).Msg("No refresh done on data, data is silently deleted...")
-				d.Drop(data.value)
-				return
+			refreshTime := time.Second * 5
+			// t := time.Hour
+			if originator != nil {
+				// If this is the node that the data was originally stored at
+				// then we want to refresh rather than delete it
+				select {
+				case <-time.After(refreshTime):
+					hash := kademliaid.NewKademliaID(&data.value)
+					log.Trace().Str("Hash", hash.String()).Msg("Sending refreshes")
+					for _, contact := range *data.Contacts {
+						refresh := rpc.New(originator.ID,
+							"REFRESH "+hash.String(), contact.Address)
+						refresh.Send(sender, refresh.Target)
+					}
+				}
+			} else {
+				t := time.Second * 10
+				select {
+				case <-data.restart:
+					log.Trace().Str("Data", data.value).Msg("Restarted data refresh timer")
+				case <-time.After(t):
+					log.Trace().Str("Data", data.value).Msg("No refresh done on data, data is silently deleted...")
+					d.Drop(data.value)
+					return
+				}
 			}
 		}
-
 	}()
 }
 
 func (d *DataStore) RestartRefreshTimer(data Data) {
 	data.restart <- true // restart the refresh timer
-
 }
