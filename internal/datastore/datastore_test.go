@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 )
@@ -17,7 +18,8 @@ func TestGet(t *testing.T) {
 	// Should be able to  get
 	d = datastore.New()
 	value := "hello"
-	d.Insert(value)
+	contacts := &[]contact.Contact{}
+	d.Insert(value, contacts, nil, nil)
 	assert.Equal(t, d.Get(kademliaid.NewKademliaID(&value)), "hello")
 
 	// Should not be able to get non-existent key
@@ -32,7 +34,8 @@ func TestInsert(t *testing.T) {
 	//should be able to insert
 	d = datastore.New()
 	value := "hello"
-	d.Insert(value)
+	contacts := &[]contact.Contact{}
+	d.Insert(value, contacts, nil, nil)
 	assert.Equal(t, d.Get(kademliaid.NewKademliaID(&value)), "hello")
 }
 
@@ -46,8 +49,9 @@ func TestEntriesAsString(t *testing.T) {
 	//should print key-value pairs when non-empty
 	d = datastore.New()
 	v1, v2 := "hello", "world"
-	d.Insert(v1)
-	d.Insert(v2)
+	contacts := &[]contact.Contact{}
+	d.Insert(v1, contacts, nil, nil)
+	d.Insert(v2, contacts, nil, nil)
 	whitespaces := regexp.MustCompile(`\s+`)
 	fmt.Println(whitespaces.ReplaceAllString(d.EntriesAsString(), ""))
 	assert.Contains(t, d.EntriesAsString(), fmt.Sprintf("%x=%s", kademliaid.NewKademliaID(&v1), v1))
@@ -59,8 +63,9 @@ func TestDrop(t *testing.T) {
 
 	d = datastore.New()
 	v1, v2 := "hello", "world"
-	d.Insert(v1)
-	d.Insert(v2)
+	contacts := &[]contact.Contact{}
+	d.Insert(v1, contacts, nil, nil)
+	d.Insert(v2, contacts, nil, nil)
 
 	// should delete the entry
 	d.Drop("hello")

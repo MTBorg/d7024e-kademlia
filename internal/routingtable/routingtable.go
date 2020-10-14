@@ -2,10 +2,11 @@ package routingtable
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"kademlia/internal/bucket"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
+
+	"github.com/rs/zerolog/log"
 )
 
 const bucketSize = 20

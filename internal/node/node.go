@@ -351,9 +351,9 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 	return s
 }
 
-func (node *Node) Store(value *string) {
+func (node *Node) Store(value *string, contacts *[]contact.Contact, originator *contact.Contact) {
 	log.Trace().Str("Value", *value).Msg("Storing value")
-	node.DataStore.Insert(*value)
+	node.DataStore.Insert(*value, contacts, originator, node.Network.UdpSender)
 }
 
 // FindKClosest returns a list of candidates containing the k closest nodes

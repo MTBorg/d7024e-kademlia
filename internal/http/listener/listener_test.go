@@ -1,6 +1,7 @@
 package httplistener_test
 
 import (
+	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	httplistener "kademlia/internal/http/listener"
 	"kademlia/internal/kademliaid"
@@ -51,7 +52,8 @@ func TestHandleGet(t *testing.T) {
 	msg := "this is a message"
 	hash := kademliaid.NewKademliaID(&msg)
 	req, _ = http.NewRequest("POST", "/objects/"+hash.String(), nil)
-	n.DataStore.Insert(msg)
+	contacts := &[]contact.Contact{}
+	n.DataStore.Insert(msg, contacts, nil, nil)
 	handler = httplistener.RequestHandler{Node: &n}
 	handler.HandleGet(writerMock, req)
 	writerMock.AssertCalled(t, "Write", []byte(msg+", from local node"))
