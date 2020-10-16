@@ -119,7 +119,7 @@ func (node *Node) ProbeAlpha(
 	return numProbed, rpcIds
 }
 
-func deserializeContacts(data string, targetId *kademliaid.KademliaID) []*contact.Contact {
+func DeserializeContacts(data string, targetId *kademliaid.KademliaID) []*contact.Contact {
 	contacts := []*contact.Contact{}
 	for _, sContact := range strings.Split(data, " ") {
 		if sContact != "" {
@@ -151,7 +151,7 @@ func (node *Node) lookupContactHandleResponses(
 			data := <-(*channels)[i]
 			// parse contacts from response data
 			contactsMutex.Lock()
-			contacts = append(contacts, deserializeContacts(data, targetId)...)
+			contacts = append(contacts, DeserializeContacts(data, targetId)...)
 			contactsMutex.Unlock()
 		}(i, &wg, &contactsMutex)
 	}
@@ -202,7 +202,7 @@ func (node *Node) lookupDataHandleResponses(sl *shortlist.Shortlist,
 				sl.Entries[i].ReturnedValue = true
 			} else {
 				contactsMutex.Lock()
-				contacts = append(contacts, deserializeContacts(data, targetId)...)
+				contacts = append(contacts, DeserializeContacts(data, targetId)...)
 				contactsMutex.Unlock()
 			}
 		}(i, &wg, &contactsMutex)

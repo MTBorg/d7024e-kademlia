@@ -1,6 +1,7 @@
 package node_test
 
 import (
+	"fmt"
 	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
@@ -13,6 +14,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestDeserializeContacts(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	targetId := kademliaid.NewRandomKademliaID()
+	id1 := kademliaid.NewRandomKademliaID()
+	id2 := kademliaid.NewRandomKademliaID()
+	data := fmt.Sprintf("%s!%s %s!%s", id1.String(), addr.String(), id2.String(), addr.String())
+
+	// should deserialize the contacts when data contains correctly formatted
+	// contacts
+	res := node.DeserializeContacts(data, targetId)
+	assert.Equal(t, 2, len(res))
+	assert.Equal(t, *id1, *res[0].ID)
+	assert.Equal(t, *id2, *res[1].ID)
+
+	// should return an empty array of contacts if the data is empty
+	res = node.DeserializeContacts("", targetId)
+	assert.NotNil(t, res)
+	assert.Equal(t, 0, len(res))
+}
 
 func TestProbeAlpha(t *testing.T) {
 	addr := address.New("127.0.0.1:1234")
