@@ -1,6 +1,7 @@
 package datastore
 
 import (
+	"errors"
 	"fmt"
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
@@ -22,6 +23,7 @@ type Data struct {
 	restart    chan bool
 	Contacts   *[]contact.Contact
 	originator bool
+	forgotten  bool
 }
 
 func New() DataStore {
@@ -44,6 +46,7 @@ func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator
 	data.Contacts = contacts
 	data.originator = originator != nil
 	d.store[id] = &data
+	data.forgotten = false
 	d.StartRefreshTimer(data, originator, sender) // If successful insert, we start the TTL
 }
 
@@ -67,6 +70,17 @@ func (d *DataStore) Get(key kademliaid.KademliaID) string {
 func (d *DataStore) Drop(value string) {
 	id := kademliaid.NewKademliaID(&value)
 	delete(d.store, id)
+}
+
+func (d *DataStore) Forget(key *kademliaid.KademliaID) error {
+	if d.store[*key] != nil {
+		log.Trace().Str("Hash", key.String()).Msg("Marking entry as forgotten")
+		d.store[*key].forgotten = true
+		return nil
+	} else {
+		log.Trace().Str("Key", key.String()).Msg("Tried to forget non-existent entry")
+		return errors.New("Tried to forget non-existent entry")
+	}
 }
 
 // Pretty printing of store
@@ -104,6 +118,16 @@ func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, se
 				select {
 				case <-time.After(refreshTime):
 					hash := kademliaid.NewKademliaID(&data.value)
+
+					//If the entry has been marked as forgotten, stop refreshing
+					if d.store[hash].forgotten {
+						log.Trace().
+							Str("Hash", hash.String()).
+							Msg("Entry has been marked as forgotten, deleting entry and stopping refresh")
+						delete(d.store, hash)
+						return
+					}
+
 					log.Trace().Str("Hash", hash.String()).Msg("Sending refreshes")
 					for _, contact := range *data.Contacts {
 						refresh := rpc.New(originator.ID,
