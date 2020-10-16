@@ -90,7 +90,7 @@ func (node *Node) RefreshBucket(bucketIndex int) {
 }
 
 // Probes at most alpha nodes from the shortlist with content
-func (node *Node) probeAlpha(
+func (node *Node) ProbeAlpha(
 	sl *shortlist.Shortlist,
 	channels *[]chan string,
 	content string,
@@ -250,7 +250,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	for {
 		closestSoFar := sl.Closest
 
-		numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), alpha)
+		numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), alpha)
 
 		// If no new nodes were probed this iteration the search is done
 		if numProbed == 0 {
@@ -264,7 +264,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 		// the search since no node closer to the target was found this iteration
 		if sl.Closest == closestSoFar {
 			log.Trace().Msg("Closest node not updated")
-			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), k)
+			numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), k)
 
 			node.lookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
 			break
@@ -316,7 +316,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 	for {
 		closestSoFar := sl.Closest
 
-		numProbed, rpcIDs := node.probeAlpha(sl, &channels, fmt.Sprintf("FIND_VALUE %s", hash.String()), alpha)
+		numProbed, rpcIDs := node.ProbeAlpha(sl, &channels, fmt.Sprintf("FIND_VALUE %s", hash.String()), alpha)
 
 		if numProbed == 0 {
 			log.Trace().Msg("FIND_VALUE lookup became stale")
@@ -330,7 +330,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 
 		if sl.Closest == closestSoFar {
 			log.Trace().Msg("Closest node not updated")
-			numProbed, rpcIds := node.probeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), k)
+			numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), k)
 
 			result = node.lookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIds)
 			if result != "" {

@@ -6,12 +6,64 @@ import (
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
+	"kademlia/internal/shortlist"
 
 	"kademlia/internal/node"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestProbeAlpha(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	n := node.Node{}
+	n.Init(addr)
+	alpha := 3
+	k := 5
+
+	// k total contacts in RT
+	for i := 0; i < k; i++ {
+		c := contact.NewContact(kademliaid.NewRandomKademliaID(), addr)
+		n.RoutingTable.AddContact(c)
+	}
+
+	sl := shortlist.NewShortlist(n.ID, n.FindKClosest(n.ID, nil, 5))
+	channels := make([]chan string, k)
+	assert.Equal(t, k, sl.Len())
+
+	// should probe the alpha closest contacts if alpha unprobed contacts exist
+	numProbed, rpcIDs := n.ProbeAlpha(sl, &channels, "", alpha)
+	assert.Equal(t, alpha, numProbed)
+	assert.Equal(t, alpha, len(rpcIDs))
+	for i := 0; i < k; i++ {
+		if i < alpha {
+			assert.True(t, sl.Entries[i].Probed)
+		} else {
+			assert.False(t, sl.Entries[i].Probed)
+		}
+	}
+	for i := 0; i < k; i++ {
+		if i < alpha {
+			assert.NotNil(t, channels[i])
+		} else {
+			assert.Nil(t, channels[i])
+		}
+	}
+
+	// should probe fewer than alpha contacts if not enough unprobed contacts
+	// exist
+	numProbed, rpcIDs = n.ProbeAlpha(sl, &channels, "", alpha)
+	assert.Equal(t, k-alpha, numProbed)
+	assert.Equal(t, k-alpha, len(rpcIDs))
+	for i := 0; i < k; i++ {
+		assert.True(t, sl.Entries[i].Probed)
+	}
+
+	// should not probe any contacts if no unprobed contacts exists
+	numProbed, rpcIDs = n.ProbeAlpha(sl, &channels, "", alpha)
+	assert.Equal(t, 0, numProbed)
+	assert.Equal(t, 0, len(rpcIDs))
+}
 
 func TestStore(t *testing.T) {
 	n := node.Node{}
