@@ -22,11 +22,6 @@ func TestParseCmd(t *testing.T) {
 
 	//should be able to parse a message command
 	// TODO: Should also test that target and content is set
-	cmd = cmdparser.ParseCmd("msg some message")
-	assert.NotNil(t, cmd)
-
-	//should be able to parse a message command
-	// TODO: Should also test that target and content is set
 	cmd = cmdparser.ParseCmd("get somehash")
 
 	// should be able to parse a exit command

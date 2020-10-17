@@ -11,7 +11,6 @@ import (
 	"kademlia/internal/commands/getid"
 	"kademlia/internal/commands/initnode"
 	"kademlia/internal/commands/join"
-	"kademlia/internal/commands/message"
 	"kademlia/internal/commands/ping"
 	"kademlia/internal/commands/put"
 	"kademlia/internal/commands/storage"
@@ -28,8 +27,6 @@ func ParseCmd(s string) Command {
 	switch cmd := fields[0]; cmd {
 	case "ping":
 		command = new(ping.Ping)
-	case "msg":
-		command = new(message.Message)
 	case "exit":
 		command = new(exit.Exit)
 	case "storage":
