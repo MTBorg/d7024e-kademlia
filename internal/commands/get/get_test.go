@@ -2,6 +2,11 @@ package get_test
 
 import (
 	"kademlia/internal/commands/get"
+	"kademlia/internal/contact"
+	"kademlia/internal/datastore"
+	"kademlia/internal/kademliaid"
+	"kademlia/internal/node"
+	"kademlia/internal/nodedata"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,6 +31,19 @@ func TestParseOption(t *testing.T) {
 
 func TestExecute(t *testing.T) {
 	// TODO: Not tested since .net lib
+
+	// should return the value if it existed locally
+	contacts := &[]contact.Contact{}
+	value := "hello world"
+	hash := kademliaid.NewKademliaID(&value)
+	n := node.Node{NodeData: nodedata.NodeData{DataStore: datastore.New()}}
+	n.DataStore.Insert(value, contacts, nil, nil)
+
+	cmd := get.Get{}
+	cmd.ParseOptions([]string{hash.String()})
+	res, err := cmd.Execute(&n)
+	assert.NoError(t, err)
+	assert.Equal(t, "hello world, from local node", res)
 }
 
 func TestPrintUsage(t *testing.T) {
