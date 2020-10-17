@@ -2,10 +2,14 @@ package exit_test
 
 import (
 	"kademlia/internal/commands/exit"
+	"kademlia/internal/datastore"
+	"kademlia/internal/node"
+	"kademlia/internal/nodedata"
 
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestParseOptions(t *testing.T) {
@@ -16,9 +20,22 @@ func TestParseOptions(t *testing.T) {
 
 }
 
-func TestExecute(t *testing.T) {
-	// TODO: Test os.exit() for 100 % coverage
+type ExitMock struct {
+	mock.Mock
+}
 
+func (m *ExitMock) exit(n int) {
+	m.Called(0)
+}
+
+func TestExecute(t *testing.T) {
+	exitMock := ExitMock{}
+	exitMock.On("exit", 0)
+	exit.ExitFunction = exitMock.exit
+	e := exit.Exit{}
+	n := node.Node{NodeData: nodedata.NodeData{DataStore: datastore.New()}}
+	e.Execute(&n)
+	exitMock.AssertExpectations(t)
 }
 
 func TestPrintUsage(t *testing.T) {

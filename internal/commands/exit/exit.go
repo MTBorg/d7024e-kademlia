@@ -10,10 +10,13 @@ import (
 type Exit struct {
 }
 
+// this is just so we can test execute
+var ExitFunction = os.Exit
+
 func (e Exit) Execute(node *node.Node) (string, error) {
 	log.Trace().Msg("Executing exit command")
 	log.Info().Msg("Node exiting...")
-	os.Exit(0)
+	ExitFunction(0)
 	return "Node exited", nil
 }
 
