@@ -134,7 +134,7 @@ func DeserializeContacts(data string, targetId *kademliaid.KademliaID) []*contac
 }
 
 // Handles the responses from the probed nodes during a node lookup
-func (node *Node) lookupContactHandleResponses(
+func (node *Node) LookupContactHandleResponses(
 	sl *shortlist.Shortlist,
 	targetId *kademliaid.KademliaID,
 	numProbed int,
@@ -168,7 +168,7 @@ func (node *Node) lookupContactHandleResponses(
 	}
 }
 
-func (node *Node) lookupDataHandleResponses(sl *shortlist.Shortlist,
+func (node *Node) LookupDataHandleResponses(sl *shortlist.Shortlist,
 	targetId *kademliaid.KademliaID,
 	numProbed int,
 	channels *[]chan string,
@@ -243,7 +243,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	}
 
 	sl := shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
-	// might need more than alpha channels on final probe is closest did not change
+	// might need more than alpha channels on final probe if closest did not change
 	channels := make([]chan string, k)
 
 	// iterative lookup until the search becomes stale
@@ -258,7 +258,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 			break
 		}
 
-		node.lookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
+		node.LookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
 
 		// Send FIND_NODE to all unqueried nodes in the shortlist and terminate
 		// the search since no node closer to the target was found this iteration
@@ -266,7 +266,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 			log.Trace().Msg("Closest node not updated")
 			numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), k)
 
-			node.lookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
+			node.LookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
 			break
 		}
 	}
@@ -323,7 +323,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			break
 		}
 
-		result = node.lookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIDs)
+		result = node.LookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIDs)
 		if result != "" {
 			return result
 		}
@@ -332,7 +332,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			log.Trace().Msg("Closest node not updated")
 			numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), k)
 
-			result = node.lookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIds)
+			result = node.LookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIds)
 			if result != "" {
 				return result
 			}

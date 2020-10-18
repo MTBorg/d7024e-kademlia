@@ -8,12 +8,123 @@ import (
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
 	"kademlia/internal/shortlist"
+	"sync"
 
 	"kademlia/internal/node"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLookupDataHandleResponses(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	targetId := kademliaid.NewRandomKademliaID()
+	n := node.Node{}
+	n.Init(addr)
+	k := 2
+
+	// k total contacts in RT
+	for i := 0; i < k; i++ {
+		c := contact.NewContact(kademliaid.NewRandomKademliaID(), addr)
+		n.RoutingTable.AddContact(c)
+	}
+
+	sl := shortlist.NewShortlist(n.ID, n.FindKClosest(n.ID, nil, k))
+	channels := make([]chan string, k)
+	assert.Equal(t, k, sl.Len())
+
+	numProbed, rpcIDs := n.ProbeAlpha(sl, &channels, "", 2)
+	assert.Equal(t, k, numProbed)
+	assert.Equal(t, k, len(rpcIDs))
+
+	// Should add the contacts recieved as response to the shortlist if the value
+	// was not returned
+	var wg sync.WaitGroup
+	wg.Add(1)
+	var res string
+	go func(wg *sync.WaitGroup, res *string) {
+		defer wg.Done()
+		// wait for response
+		*res = n.LookupDataHandleResponses(sl, targetId, numProbed, &channels, rpcIDs)
+	}(&wg, &res)
+
+	// mock data and write to channel to simulate response from network
+	id1 := kademliaid.NewRandomKademliaID()
+	id2 := kademliaid.NewRandomKademliaID()
+	resp1 := fmt.Sprintf("%s!%s", id1.String(), addr.String())
+	resp2 := fmt.Sprintf("%s!%s", id2.String(), addr.String())
+	channels[0] <- resp1
+	channels[1] <- resp2
+	wg.Wait()
+
+	assert.Equal(t, "", res)
+	assert.Equal(t, k+2, sl.Len())
+	assert.Nil(t, n.RPCPool.GetEntry(rpcIDs[0]))
+	assert.Nil(t, n.RPCPool.GetEntry(rpcIDs[1]))
+
+	// Should return the value if it is found in the response
+	sl = shortlist.NewShortlist(n.ID, n.FindKClosest(n.ID, nil, k))
+	channels = make([]chan string, k)
+	numProbed, rpcIDs = n.ProbeAlpha(sl, &channels, "", 2)
+	wg.Add(1)
+	go func(wg *sync.WaitGroup, res *string) {
+		defer wg.Done()
+		*res = n.LookupDataHandleResponses(sl, targetId, numProbed, &channels, rpcIDs)
+	}(&wg, &res)
+
+	// value returned in chan 2
+	valResp := fmt.Sprintf("VALUE=hello world/SENDERID=%s", id2.String())
+	channels[0] <- resp1
+	channels[1] <- valResp
+	wg.Wait()
+
+	assert.Equal(t, fmt.Sprintf("hello world, from node: %s", id2.String()), res)
+
+}
+
+func TestLookupContactHandleResponses(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	targetId := kademliaid.NewRandomKademliaID()
+	n := node.Node{}
+	n.Init(addr)
+	k := 2
+
+	// k total contacts in RT
+	for i := 0; i < k; i++ {
+		c := contact.NewContact(kademliaid.NewRandomKademliaID(), addr)
+		n.RoutingTable.AddContact(c)
+	}
+
+	sl := shortlist.NewShortlist(n.ID, n.FindKClosest(n.ID, nil, k))
+	channels := make([]chan string, k)
+	assert.Equal(t, k, sl.Len())
+
+	numProbed, rpcIDs := n.ProbeAlpha(sl, &channels, "", 2)
+	assert.Equal(t, k, numProbed)
+	assert.Equal(t, k, len(rpcIDs))
+
+	// Should add the contacts recieved as response to the shortlist
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		// wait for response
+		n.LookupContactHandleResponses(sl, targetId, numProbed, &channels, rpcIDs)
+	}(&wg)
+
+	// mock data and write to channel to simulate response from network
+	id1 := kademliaid.NewRandomKademliaID()
+	id2 := kademliaid.NewRandomKademliaID()
+	resp1 := fmt.Sprintf("%s!%s", id1.String(), addr.String())
+	resp2 := fmt.Sprintf("%s!%s", id2.String(), addr.String())
+	channels[0] <- resp1
+	channels[1] <- resp2
+	wg.Wait()
+
+	assert.Equal(t, k+2, sl.Len())
+	assert.Nil(t, n.RPCPool.GetEntry(rpcIDs[0]))
+	assert.Nil(t, n.RPCPool.GetEntry(rpcIDs[1]))
+}
 
 func TestDeserializeContacts(t *testing.T) {
 	addr := address.New("127.0.0.1:1234")
