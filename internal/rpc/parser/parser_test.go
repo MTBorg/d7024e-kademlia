@@ -13,6 +13,7 @@ import (
 	"kademlia/internal/rpccommands/findvalueresp"
 	"kademlia/internal/rpccommands/ping"
 	"kademlia/internal/rpccommands/pong"
+	"kademlia/internal/rpccommands/refresh"
 	"kademlia/internal/rpccommands/store"
 	"testing"
 
@@ -68,6 +69,12 @@ func TestParseRPC(t *testing.T) {
 	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
 	assert.Nil(t, err)
 	assert.IsType(t, &findvalueresp.FindValueResp{}, rpcCmd)
+
+	// Should be able to parse a REFRESH RPC
+	r = rpc.New(senderId, "REFRESH", adr)
+	rpcCmd, err = rpcparser.ParseRPC(&c, &r)
+	assert.Nil(t, err)
+	assert.IsType(t, &refresh.Refresh{}, rpcCmd)
 
 	//Should not parse an unknown RPC
 	r = rpc.New(senderId, "HELLO", adr)
