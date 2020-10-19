@@ -47,6 +47,18 @@ func TestNewShortlist(t *testing.T) {
 	}
 }
 
+func TestLess(t *testing.T) {
+	var sl shortlist.Shortlist
+
+	// Should return true if the second element is nil
+	sl = shortlist.Shortlist{Entries: [5]*shortlist.Entry{&shortlist.Entry{}, nil}}
+	assert.Equal(t, true, sl.Less(0, 1))
+
+	// Should return false if the first element is nil and second is not
+	sl = shortlist.Shortlist{Entries: [5]*shortlist.Entry{nil, &shortlist.Entry{}}}
+	assert.Equal(t, false, sl.Less(0, 1))
+}
+
 func TestLen(t *testing.T) {
 	addr := address.New("address")
 	candidates := []contact.Contact{
