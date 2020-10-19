@@ -27,6 +27,8 @@ services:
       - ALPHA=3
       - LISTEN_PORT=1776
       - SEND_PORT=1777
+      - REFRESH_TIME=5
+      - TTL_TIME=10
 
 networks:
   kademlia_dev_network:

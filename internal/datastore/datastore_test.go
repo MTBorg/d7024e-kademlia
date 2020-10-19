@@ -2,15 +2,28 @@ package datastore_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
+	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 )
+
+type SenderMock struct {
+	mock.Mock
+}
+
+func (m *SenderMock) Send(data string, target *address.Address) error {
+	args := m.Called(data, target)
+	return args.Error(0)
+}
 
 func TestGet(t *testing.T) {
 	var d datastore.DataStore
@@ -30,13 +43,42 @@ func TestGet(t *testing.T) {
 
 func TestInsert(t *testing.T) {
 	var d datastore.DataStore
+	var contacts *[]contact.Contact
+	value := "hello"
+	hash := kademliaid.NewKademliaID(&value)
 
 	//should be able to insert
 	d = datastore.New()
-	value := "hello"
-	contacts := &[]contact.Contact{}
+	contacts = &[]contact.Contact{}
 	d.Insert(value, contacts, nil, nil)
 	assert.Equal(t, d.Get(kademliaid.NewKademliaID(&value)), "hello")
+
+	//should send refresh RPCs if originator
+	d = datastore.New()
+	os.Setenv("REFRESH_TIME", "1")
+	originatorId := kademliaid.NewRandomKademliaID()
+	otherContactId := kademliaid.NewRandomKademliaID()
+	originator := contact.NewContact(originatorId, address.New("localhost:3000"))
+	otherContact := contact.NewContact(otherContactId, address.New("localhost:3000"))
+	contacts = &[]contact.Contact{otherContact}
+	var senderMock *SenderMock
+	senderMock = new(SenderMock)
+	senderMock.On("Send", mock.Anything, otherContact.Address).Return(nil)
+	d.Insert(value, contacts, &originator, senderMock)
+	// Sleep for a bit so that the select case can trigger in the goroutine
+	time.Sleep(time.Second * 2)
+	senderMock.AssertExpectations(t)
+
+	//should send refresh RPCs if originator
+	d = datastore.New()
+	os.Setenv("REFRESH_TIME", "10")
+	os.Setenv("TTL_TIME", "1")
+	contacts = &[]contact.Contact{}
+	d.Insert(value, contacts, nil, nil)
+
+	// Sleep for a bit so that the select case can trigger in the goroutine
+	time.Sleep(time.Second * 2)
+	assert.Equal(t, "", d.Get(hash))
 }
 
 func TestEntriesAsString(t *testing.T) {
