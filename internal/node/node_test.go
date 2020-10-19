@@ -8,6 +8,7 @@ import (
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
 	"kademlia/internal/shortlist"
+	"os"
 	"sync"
 
 	"kademlia/internal/node"
@@ -266,4 +267,9 @@ func TestFindKClosest(t *testing.T) {
 	kClosest := n.FindKClosest(key, id1, 3)
 	// contact c1 should not be returned since is has the same id as the requestor
 	assert.Equal(t, 2, len(kClosest))
+}
+
+func TestGetEnvIntVariable(t *testing.T) {
+	os.Setenv("TEST_VAR", "1337")
+	assert.Equal(t, 1337, node.GetEnvIntVariable("TEST_VAR", 123))
 }
