@@ -222,7 +222,7 @@ func (node *Node) LookupDataHandleResponses(sl *shortlist.Shortlist,
 	return result
 }
 
-func getEnvIntVariable(variable string, defaultValue int) int {
+func GetEnvIntVariable(variable string, defaultValue int) int {
 	val, err := strconv.Atoi(os.Getenv(variable))
 	if err != nil {
 		log.Error().Msgf("Failed to convert env variable %s from string to int: %s", variable, err)
@@ -290,8 +290,8 @@ func NewRPCWithID(senderId *kademliaid.KademliaID, content string, target *addre
 }
 
 func setupLookUpAlgorithm(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
-	alpha = getEnvIntVariable("ALPHA", 3)
-	k = getEnvIntVariable("K", 5)
+	alpha = GetEnvIntVariable("ALPHA", 3)
+	k = GetEnvIntVariable("K", 5)
 	sl = shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
 
 	// might need more than alpha channels on final probe is closest did not change
