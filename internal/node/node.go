@@ -222,29 +222,27 @@ func (node *Node) LookupDataHandleResponses(sl *shortlist.Shortlist,
 	return result
 }
 
+func getEnvIntVariable(variable string, defaultValue int) int {
+	val, err := strconv.Atoi(os.Getenv(variable))
+	if err != nil {
+		log.Error().Msgf("Failed to convert env variable %s from string to int: %s", variable, err)
+		return defaultValue
+	}
+	return val
+}
+
 // LookupContact searches for the contact with the specified key using the node
 // lookup algorithm.
 //
 // TODO: Ignore request after waiting X time
 func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
-	alpha, err := strconv.Atoi(os.Getenv("ALPHA"))
-	if err != nil {
-		log.Error().Msgf("Failed to convert env variable ALPHA from string to int: %s", err)
-	}
-	k, err := strconv.Atoi(os.Getenv("K"))
-	if err != nil {
-		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
-	}
+	alpha, k, sl, channels := setupLookUpAlgorithm(node, id)
 
 	// Restart refresh timer of the bucket this ID is in range of
 	if *id != *node.ID {
 		bucketIndex := node.RoutingTable.GetBucketIndex(id)
 		node.RefreshTimers[bucketIndex].RestartRefreshTimer()
 	}
-
-	sl := shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
-	// might need more than alpha channels on final probe if closest did not change
-	channels := make([]chan string, k)
 
 	// iterative lookup until the search becomes stale
 	for {
@@ -291,24 +289,22 @@ func NewRPCWithID(senderId *kademliaid.KademliaID, content string, target *addre
 	}
 }
 
+func setupLookUpAlgorithm(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
+	alpha = getEnvIntVariable("ALPHA", 3)
+	k = getEnvIntVariable("K", 5)
+	sl = shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
+
+	// might need more than alpha channels on final probe is closest did not change
+	channels = make([]chan string, k)
+	return
+}
+
 func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
-	alpha, err := strconv.Atoi(os.Getenv("ALPHA"))
-	if err != nil {
-		log.Error().Msgf("Failed to convert env variable ALPHA from string to int: %s", err)
-	}
-	k, err := strconv.Atoi(os.Getenv("K"))
-	if err != nil {
-		log.Error().Msgf("Failed to convert env variable K from string to int: %s", err)
-	}
+	alpha, k, sl, channels := setupLookUpAlgorithm(node, hash)
 
 	// Restart the refresh timer of the bucket this ID is in range of
 	bucketIndex := node.RoutingTable.GetBucketIndex(hash)
 	node.RefreshTimers[bucketIndex].RestartRefreshTimer()
-
-	sl := shortlist.NewShortlist(hash, node.FindKClosest(hash, nil, alpha))
-
-	// might need more than alpha channels on final probe is closest did not change
-	channels := make([]chan string, k)
 
 	// iterative lookup until the search becomes stale and no closer node
 	// can be found
