@@ -11,10 +11,10 @@ What variant is used can be specified by passing either
 `docker-compose-dev.yml` or `docker-compose-prod.yml` to the relevant
 `<compose-file>` option.
 
-To run a single node using compose run
+To run one or more node using compose run
 
 ```bash
-docker-compose -f <compose-file> up
+docker-compose -f <compose-file> up --build --scale kademlia=10
 ```
 
 #### Swarm
