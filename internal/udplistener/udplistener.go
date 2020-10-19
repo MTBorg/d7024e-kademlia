@@ -5,7 +5,7 @@ import (
 	"kademlia/internal/contact"
 	"kademlia/internal/node"
 	"kademlia/internal/rpc"
-	"kademlia/internal/rpc/parser"
+	rpcparser "kademlia/internal/rpc/parser"
 	"net"
 	"strings"
 
@@ -30,33 +30,35 @@ func waitForMessages(c *net.UDPConn, node *node.Node) {
 		buf := make([]byte, 512)
 		nr, addr, err := c.ReadFromUDP(buf)
 		if err != nil {
-			continue
+			log.Warn().Str("Error", err.Error()).Msg("Failed to read from UDP")
+			return
 		}
-		data := buf[0:nr]
-		adr := address.New(addr.String())
-		rpcMsg, err := rpc.Deserialize(string(data))
-		if err == nil {
-			c := contact.NewContact(rpcMsg.SenderId, adr)
-			node.RoutingTable.AddContact(c)
+		go func() { // Add goroutine when a rpc-message was read
+			data := buf[0:nr]
+			adr := address.New(addr.String())
+			rpcMsg, err := rpc.Deserialize(string(data))
+			if err == nil {
+				c := contact.NewContact(rpcMsg.SenderId, adr)
+				node.RoutingTable.AddContact(c)
 
-			cmd, err := rpcparser.ParseRPC(&c, &rpcMsg)
-			if err != nil {
-				log.Warn().Str("Error", err.Error()).Msg("Failed to parse RPC")
-				continue
-			}
+				cmd, err := rpcparser.ParseRPC(&c, &rpcMsg)
+				if err != nil {
+					log.Warn().Str("Error", err.Error()).Msg("Failed to parse RPC")
+				}
 
-			options := strings.Split(rpcMsg.Content, " ")[1:]
-			if err = cmd.ParseOptions(&options); err == nil {
-				cmd.Execute(node)
+				options := strings.Split(rpcMsg.Content, " ")[1:]
+				if err = cmd.ParseOptions(&options); err == nil {
+					cmd.Execute(node)
+				} else {
+					log.Warn().
+						Str("Error", err.Error()).
+						Msg("Failed to parse RPC options")
+				}
+
+				log.Trace().Str("NodeID", c.ID.String()).Str("Address", c.Address.String()).Msg("Inserting new node to bucket")
 			} else {
-				log.Warn().
-					Str("Error", err.Error()).
-					Msg("Failed to parse RPC options")
+				log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message in UDPListener")
 			}
-
-			log.Trace().Str("NodeID", c.ID.String()).Str("Address", c.Address.String()).Msg("Inserting new node to bucket")
-		} else {
-			log.Warn().Str("Error", err.Error()).Msg("Failed to deserialize message in UDPListener")
-		}
+		}()
 	}
 }
