@@ -18,9 +18,10 @@ type DataStore struct {
 }
 
 type Data struct {
-	value    string
-	restart  chan bool
-	Contacts *[]contact.Contact
+	value      string
+	restart    chan bool
+	Contacts   *[]contact.Contact
+	originator bool
 }
 
 func New() DataStore {
@@ -41,6 +42,7 @@ func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator
 	data.value = value
 	data.restart = make(chan bool)
 	data.Contacts = contacts
+	data.originator = originator != nil
 	d.store[id] = &data
 	d.StartRefreshTimer(data, originator, sender) // If successful insert, we start the TTL
 }
@@ -51,7 +53,9 @@ func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator
 func (d *DataStore) Get(key kademliaid.KademliaID) string {
 	data := d.store[key]
 	if data != nil {
-		d.RestartRefreshTimer(*data)
+		if !data.originator {
+			d.RestartRefreshTimer(*data)
+		}
 		return data.value
 
 	}
