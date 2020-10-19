@@ -6,7 +6,8 @@ import (
 	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/rpc"
-	"kademlia/internal/udpsender"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -38,7 +39,7 @@ func New() DataStore {
 // i.e. this node's contact representation. If originator is nil, then that
 // means that the storage of the value was not initiated on this node, and thus
 // this node should not send REFRESH RPCs to the other nodes.
-func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator *contact.Contact, sender *udpsender.UDPSender) {
+func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator *contact.Contact, sender rpc.Sender) {
 	id := kademliaid.NewKademliaID(&value)
 	data := Data{}
 	data.value = value
@@ -107,16 +108,21 @@ func (d *DataStore) EntriesAsString() string {
 	return s
 }
 
-func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, sender *udpsender.UDPSender) {
+func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, sender rpc.Sender) {
 	go func() {
 		for {
-			refreshTime := time.Second * 5
+			refreshTime, err := strconv.Atoi(os.Getenv("REFRESH_TIME"))
+			if err != nil {
+				log.Error().Msgf("Failed to convert env variable REFRESH_TIME from string to int: %s", err)
+				refreshTime = 5
+			}
+			refreshTimer := time.Duration(float64(time.Second) * float64(refreshTime))
 			// t := time.Hour
 			if originator != nil {
 				// If this is the node that the data was originally stored at
 				// then we want to refresh rather than delete it
 				select {
-				case <-time.After(refreshTime):
+				case <-time.After(refreshTimer):
 					hash := kademliaid.NewKademliaID(&data.value)
 
 					//If the entry has been marked as forgotten, stop refreshing
@@ -136,11 +142,16 @@ func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, se
 					}
 				}
 			} else {
-				t := time.Second * 10
+				ttlTime, err := strconv.Atoi(os.Getenv("TTL_TIME"))
+				if err != nil {
+					log.Error().Msgf("Failed to convert env variable TTL_TIME from string to int: %s", err)
+					ttlTime = 10
+				}
+				ttlTimer := time.Duration(float64(time.Second) * float64(ttlTime))
 				select {
 				case <-data.restart:
 					log.Trace().Str("Data", data.value).Msg("Restarted data refresh timer")
-				case <-time.After(t):
+				case <-time.After(ttlTimer):
 					log.Trace().Str("Data", data.value).Msg("No refresh done on data, data is silently deleted...")
 					d.Drop(data.value)
 					return
