@@ -30,6 +30,7 @@ services:
       - REFRESH_TIME=5
       - TTL_TIME=10
       - BUCKET_REFRESH_TIME=3600
+      - WAIT_FOR_RESPONSE_TIME=5
 
 networks:
   kademlia_dev_network:

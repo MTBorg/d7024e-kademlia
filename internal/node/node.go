@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -106,7 +107,7 @@ func (node *Node) ProbeAlpha(
 
 			var entryRPC *rpcpool.Entry
 			node.RPCPool.WithLock(func() {
-				node.RPCPool.Add(rpc.RPCId)
+				node.RPCPool.Add(rpc.RPCId, &sl.Entries[i].Contact)
 				entryRPC = node.RPCPool.GetEntry(rpc.RPCId)
 			})
 
@@ -133,11 +134,25 @@ func DeserializeContacts(data string, targetId *kademliaid.KademliaID) []*contac
 	return contacts
 }
 
+// WaitForData waits for FIND_*_RESPONSE or if the wfrt (Wait For Response Time) is reached it drops the contact from the shortlist
+func (node *Node) WaitForData(wfrt int, channel *chan string, sl *shortlist.Shortlist, contact *contact.Contact) string {
+	select {
+	case <-time.After(time.Second * time.Duration(wfrt)): // Response time-out
+		log.Debug().Msg("Lookup, waiting for reponse timed-out!")
+		sl.Drop(contact)
+		break
+	case data := <-*channel:
+		return data
+	}
+	return ""
+}
+
 // Handles the responses from the probed nodes during a node lookup
 func (node *Node) LookupContactHandleResponses(
 	sl *shortlist.Shortlist,
 	targetId *kademliaid.KademliaID,
 	numProbed int,
+	wfrt int,
 	channels *[]chan string,
 	rpcIds []*kademliaid.KademliaID) {
 	// Handle response from probed nodes
@@ -148,11 +163,12 @@ func (node *Node) LookupContactHandleResponses(
 	for i := 0; i < numProbed; i++ {
 		go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
 			defer wg.Done()
-			data := <-(*channels)[i]
+			data := node.WaitForData(wfrt, &(*channels)[i], sl, node.RPCPool.GetEntry(rpcIds[i]).Contact)
 			// parse contacts from response data
 			contactsMutex.Lock()
 			contacts = append(contacts, DeserializeContacts(data, targetId)...)
 			contactsMutex.Unlock()
+
 		}(i, &wg, &contactsMutex)
 	}
 	wg.Wait()
@@ -171,6 +187,7 @@ func (node *Node) LookupContactHandleResponses(
 func (node *Node) LookupDataHandleResponses(sl *shortlist.Shortlist,
 	targetId *kademliaid.KademliaID,
 	numProbed int,
+	wfrt int,
 	channels *[]chan string,
 	rpcIds []*kademliaid.KademliaID) string {
 
@@ -182,7 +199,7 @@ func (node *Node) LookupDataHandleResponses(sl *shortlist.Shortlist,
 	for i := 0; i < numProbed; i++ {
 		go func(i int, wg *sync.WaitGroup, contactsMutex *sync.Mutex) {
 			defer wg.Done()
-			data := <-(*channels)[i]
+			data := node.WaitForData(wfrt, &(*channels)[i], sl, node.RPCPool.GetEntry(rpcIds[i]).Contact)
 
 			if match, _ := regexp.MatchString("VALUE=.*", data); match { // Value was found
 				regex := regexp.MustCompile(`=`)
@@ -236,7 +253,7 @@ func GetEnvIntVariable(variable string, defaultValue int) int {
 //
 // TODO: Ignore request after waiting X time
 func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
-	alpha, k, sl, channels := SetupLookUpAlgorithm(node, id)
+	alpha, k, wfrt, sl, channels := SetupLookUpAlgorithm(node, id)
 
 	// Restart refresh timer of the bucket this ID is in range of
 	if *id != *node.ID {
@@ -256,7 +273,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 			break
 		}
 
-		node.LookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
+		node.LookupContactHandleResponses(sl, id, numProbed, wfrt, &channels, rpcIds)
 
 		// Send FIND_NODE to all unqueried nodes in the shortlist and terminate
 		// the search since no node closer to the target was found this iteration
@@ -264,7 +281,7 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 			log.Trace().Msg("Closest node not updated")
 			numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_NODE", id), k)
 
-			node.LookupContactHandleResponses(sl, id, numProbed, &channels, rpcIds)
+			node.LookupContactHandleResponses(sl, id, numProbed, wfrt, &channels, rpcIds)
 			break
 		}
 	}
@@ -293,12 +310,14 @@ func NewRPCWithID(senderId *kademliaid.KademliaID, content string, target *addre
 // Returns:
 // k      : the number of closest contacts to search for
 // alpha  : the number of contacts to query during each iteration of the lookup
+// wfrt	  : the number of seconds for the response to wait
 // sl     : the shortlist which will contain the alpha closest contacts that the
 //          node itself knows
 // channels : the k channels where any responses will be written to
-var SetupLookUpAlgorithm = func(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
+var SetupLookUpAlgorithm = func(node *Node, id *kademliaid.KademliaID) (alpha int, k int, wfrt int, sl *shortlist.Shortlist, channels []chan string) {
 	alpha = GetEnvIntVariable("ALPHA", 3)
 	k = GetEnvIntVariable("K", 5)
+	wfrt = GetEnvIntVariable("WAIT_FOR_RESPONSE_TIME", 5)
 	sl = shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
 
 	// might need more than alpha channels on final probe is closest did not change
@@ -307,7 +326,7 @@ var SetupLookUpAlgorithm = func(node *Node, id *kademliaid.KademliaID) (alpha in
 }
 
 func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
-	alpha, k, sl, channels := SetupLookUpAlgorithm(node, hash)
+	alpha, k, wfrt, sl, channels := SetupLookUpAlgorithm(node, hash)
 
 	// Restart the refresh timer of the bucket this ID is in range of
 	bucketIndex := node.RoutingTable.GetBucketIndex(hash)
@@ -326,7 +345,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			break
 		}
 
-		result = node.LookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIDs)
+		result = node.LookupDataHandleResponses(sl, hash, numProbed, wfrt, &channels, rpcIDs)
 		if result != "" {
 			return result
 		}
@@ -335,7 +354,7 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			log.Trace().Msg("Closest node not updated")
 			numProbed, rpcIds := node.ProbeAlpha(sl, &channels, fmt.Sprintf("%s %s", "FIND_VALUE", hash), k)
 
-			result = node.LookupDataHandleResponses(sl, hash, numProbed, &channels, rpcIds)
+			result = node.LookupDataHandleResponses(sl, hash, numProbed, wfrt, &channels, rpcIds)
 			if result != "" {
 				return result
 			}

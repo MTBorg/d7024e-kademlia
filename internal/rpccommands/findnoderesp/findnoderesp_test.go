@@ -1,11 +1,12 @@
 package findenoderesp_test
 
 import (
+	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
 	"kademlia/internal/nodedata"
-	"kademlia/internal/rpccommands/findnoderesp"
+	findenoderesp "kademlia/internal/rpccommands/findnoderesp"
 	"kademlia/internal/rpcpool"
 	"testing"
 
@@ -24,7 +25,8 @@ func TestNew(t *testing.T) {
 func TestExecute(t *testing.T) {
 	n := node.Node{NodeData: nodedata.NodeData{DataStore: datastore.New(), RPCPool: rpcpool.New()}}
 	rpcID := kademliaid.NewRandomKademliaID()
-	n.RPCPool.Add(rpcID)
+	contact := contact.Contact{ID: rpcID}
+	n.RPCPool.Add(rpcID, &contact)
 	findRespCmd := findenoderesp.New(rpcID)
 	var content, data string
 	var channel chan string

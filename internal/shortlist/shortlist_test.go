@@ -153,3 +153,27 @@ func TestGetContacts(t *testing.T) {
 	cs := sl.GetContacts()
 	assert.Equal(t, 4, len(cs))
 }
+
+func TestDrop(t *testing.T) {
+	// should remove a contact
+	adr := address.New("127.0.0.1")
+	contacts := []contact.Contact{}
+	target := kademliaid.FromString(strings.Repeat("0", 40))
+	for i := 0; i < 4; i++ {
+		s := strconv.Itoa(i+1) + strings.Repeat("0", 39) // +1 to avoid all zeroes (equal to target)
+		contact := contact.NewContact(kademliaid.FromString(s), adr)
+		contact.CalcDistance(target)
+		contacts = append(contacts, contact)
+	}
+	sl := shortlist.NewShortlist(target, contacts)
+	assert.Equal(t, 4, sl.Len())
+	contact := sl.Entries[2].Contact
+	assert.NotNil(t, contact)
+	sl.Drop(&contact)
+	assert.Equal(t, 3, sl.Len())
+	for i := 0; i < len(sl.Entries); i++ {
+		if sl.Entries[i] != nil {
+			assert.NotEqual(t, contact, sl.Entries[i].Contact)
+		}
+	}
+}

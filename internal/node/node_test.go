@@ -19,6 +19,58 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestWaitForData(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	node := node.Node{}
+	node.Init(addr)
+	k := 1
+
+	c := contact.NewContact(kademliaid.NewRandomKademliaID(), addr)
+	node.RoutingTable.AddContact(c)
+
+	sl := shortlist.NewShortlist(node.ID, node.FindKClosest(node.ID, nil, k))
+	channels := make([]chan string, k)
+	assert.Equal(t, k, sl.Len())
+
+	numProbed, rpcIDs := node.ProbeAlpha(sl, &channels, "", 1)
+	assert.Equal(t, k, numProbed)
+	assert.Equal(t, k, len(rpcIDs))
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	var res string
+
+	// Should return empty string since 1st case in WaitForData is reached, that the timer expired
+	assert.NotEqual(t, 0, sl.Len())
+	go func(wg *sync.WaitGroup, res *string) {
+		defer wg.Done()
+		// wait for response
+		*res = node.WaitForData(1, &(channels)[0], sl, node.RPCPool.GetEntry(rpcIDs[0]).Contact) // Wait 1 second
+	}(&wg, &res)
+
+	wg.Wait()
+
+	assert.Equal(t, "", res)
+	assert.Equal(t, 0, sl.Len())
+
+	// Should the data string since 2st case in WaitForData is reached, that data is written to the channel
+	wg.Add(1)
+	go func(wg *sync.WaitGroup, res *string) {
+		defer wg.Done()
+		// wait for response
+		*res = node.WaitForData(1, &(channels)[0], sl, node.RPCPool.GetEntry(rpcIDs[0]).Contact)
+	}(&wg, &res)
+	time.Sleep(time.Millisecond * 100)
+	// mock data and write to channel to simulate response from network
+	id1 := kademliaid.NewRandomKademliaID()
+	resp1 := fmt.Sprintf("%s!%s", id1.String(), addr.String())
+	channels[0] <- resp1 // Write data to channel
+
+	wg.Wait()
+
+	assert.Equal(t, fmt.Sprintf("%s!%s", id1.String(), addr.String()), res)
+}
+
 func TestLookupDataHandleResponses(t *testing.T) {
 	addr := address.New("127.0.0.1:1234")
 	targetId := kademliaid.NewRandomKademliaID()
@@ -48,7 +100,7 @@ func TestLookupDataHandleResponses(t *testing.T) {
 	go func(wg *sync.WaitGroup, res *string) {
 		defer wg.Done()
 		// wait for response
-		*res = n.LookupDataHandleResponses(sl, targetId, numProbed, &channels, rpcIDs)
+		*res = n.LookupDataHandleResponses(sl, targetId, numProbed, 10, &channels, rpcIDs)
 	}(&wg, &res)
 
 	// mock data and write to channel to simulate response from network
@@ -72,7 +124,7 @@ func TestLookupDataHandleResponses(t *testing.T) {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup, res *string) {
 		defer wg.Done()
-		*res = n.LookupDataHandleResponses(sl, targetId, numProbed, &channels, rpcIDs)
+		*res = n.LookupDataHandleResponses(sl, targetId, numProbed, 10, &channels, rpcIDs)
 	}(&wg, &res)
 
 	// value returned in chan 2
@@ -111,7 +163,7 @@ func TestLookupContactHandleResponses(t *testing.T) {
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
 		// wait for response
-		n.LookupContactHandleResponses(sl, targetId, numProbed, &channels, rpcIDs)
+		n.LookupContactHandleResponses(sl, targetId, numProbed, 10, &channels, rpcIDs)
 	}(&wg)
 
 	// mock data and write to channel to simulate response from network
@@ -284,9 +336,10 @@ func TestSetupLookupAlgorithm(t *testing.T) {
 	n.RoutingTable.AddContact(c)
 
 	// should return the vars needed in the lookup algo
-	alpha, k, sl, channels := node.SetupLookUpAlgorithm(&n, n.ID)
+	alpha, k, wfrt, sl, channels := node.SetupLookUpAlgorithm(&n, n.ID)
 	assert.Equal(t, 3, alpha)
 	assert.Equal(t, 5, k)
+	assert.Equal(t, 5, wfrt)
 	assert.Equal(t, 1, sl.Len())
 	assert.Equal(t, k, len(channels))
 }
@@ -318,12 +371,13 @@ func TestLookupContact(t *testing.T) {
 	alpha := 3
 	k := 5
 	channels := make([]chan string, k)
+	wrtf := 10
 
 	n, sl, slStateAtStart := lookupHelper(k, alpha, targetId)
 
 	// mock of SetupLookUpAlgorithm
-	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
-		return alpha, k, sl, channels
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, wrtf, sl, channels
 	}
 
 	// perform the lookup in go routine
@@ -388,13 +442,14 @@ func TestLookupData(t *testing.T) {
 	targetId := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffffff")
 	alpha := 3
 	k := 5
+	wrtf := 10
 	channels := make([]chan string, k)
 
 	n, sl, _ := lookupHelper(k, alpha, targetId)
 
 	// mock of SetupLookUpAlgorithm
-	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
-		return alpha, k, sl, channels
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, wrtf, sl, channels
 	}
 
 	// perform the lookup in go routine
@@ -432,8 +487,8 @@ func TestLookupData(t *testing.T) {
 	channels = make([]chan string, k)
 
 	// mock of SetupLookUpAlgorithm
-	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
-		return alpha, k, sl, channels
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, wrtf, sl, channels
 	}
 
 	wg.Add(1)
@@ -486,8 +541,8 @@ func TestLookupData(t *testing.T) {
 	channels = make([]chan string, k)
 
 	// mock of SetupLookUpAlgorithm
-	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
-		return alpha, k, sl, channels
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, wrtf, sl, channels
 	}
 
 	wg.Add(1)
