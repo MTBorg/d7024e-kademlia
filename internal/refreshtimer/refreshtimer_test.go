@@ -44,7 +44,6 @@ func TestStartRefreshTimer(t *testing.T) {
 	rt.StartRefreshTimer(func(b int) { doerMock.Do(b) })
 	// sleep to trigger refresh
 	time.Sleep(time.Second * 2)
-	doerMock.AssertExpectations(t)
 	doerMock.AssertNumberOfCalls(t, "Do", 1)
 
 	// should be able to restart the refresh timer
@@ -55,9 +54,7 @@ func TestStartRefreshTimer(t *testing.T) {
 	rt.StartRefreshTimer(func(b int) { doerMock2.Do(b) })
 	time.Sleep(time.Duration(time.Millisecond) * 500)
 	rt.RestartRefreshTimer()
-	time.Sleep(time.Duration(time.Millisecond) * 700)
 	doerMock2.AssertNotCalled(t, "Do")
-	time.Sleep(time.Duration(time.Millisecond) * 500)
-	doerMock2.AssertExpectations(t)
+	time.Sleep(time.Duration(time.Millisecond) * 1500)
 	doerMock2.AssertNumberOfCalls(t, "Do", 1)
 }
