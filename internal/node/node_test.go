@@ -1,18 +1,20 @@
 package node_test
 
 import (
-	"fmt"
 	"kademlia/internal/address"
 	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
+	"kademlia/internal/node"
 	"kademlia/internal/rpc"
 	"kademlia/internal/shortlist"
-	"os"
-	"sync"
 
-	"kademlia/internal/node"
+	"fmt"
+	"os"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -80,7 +82,6 @@ func TestLookupDataHandleResponses(t *testing.T) {
 	wg.Wait()
 
 	assert.Equal(t, fmt.Sprintf("hello world, from node: %s", id2.String()), res)
-
 }
 
 func TestLookupContactHandleResponses(t *testing.T) {
@@ -212,7 +213,6 @@ func TestStore(t *testing.T) {
 }
 
 func TestNewRPCWithID(t *testing.T) {
-
 	// should be equal
 	senderid := kademliaid.NewRandomKademliaID()
 	rpcid := kademliaid.NewRandomKademliaID()
@@ -226,7 +226,6 @@ func TestNewRPCWithID(t *testing.T) {
 }
 
 func TestNewRPC(t *testing.T) {
-
 	// should be equal
 	n := node.Node{}
 	adr := address.New("127.0.0.1")
@@ -235,7 +234,6 @@ func TestNewRPC(t *testing.T) {
 	rpc2 := rpc.New(senderId, "TEST", adr)
 	assert.Equal(t, rpc1.Content, rpc2.Content)
 	assert.Equal(t, rpc1.Target, rpc2.Target)
-
 }
 
 func TestInit(t *testing.T) {
@@ -291,4 +289,223 @@ func TestSetupLookupAlgorithm(t *testing.T) {
 	assert.Equal(t, 5, k)
 	assert.Equal(t, 1, sl.Len())
 	assert.Equal(t, k, len(channels))
+}
+
+// fixture that returns a new node and shortlist as well as the contacts
+// in the shortlist
+func lookupHelper(k int, alpha int, targetId *kademliaid.KademliaID) (*node.Node, *shortlist.Shortlist, []contact.Contact) {
+	addr := address.New("127.0.0.1:1234")
+	n := node.Node{}
+	n.Init(addr)
+
+	// the original shortlist will contain k=5 contacts which are all far away
+	// from the targetID
+	for i := 0; i < k; i++ {
+		id := kademliaid.FromString(strings.Repeat("f", 20+i) + strings.Repeat("0", 20-i))
+		c := contact.NewContact(id, addr)
+		n.RoutingTable.AddContact(c)
+	}
+	sl := shortlist.NewShortlist(targetId, n.FindKClosest(targetId, nil, alpha))
+
+	return &n, sl, sl.GetContacts()
+}
+
+func TestLookupContact(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	targetId := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffffff")
+
+	// mock return values from SetupLookUpAlgorithm
+	alpha := 3
+	k := 5
+	channels := make([]chan string, k)
+
+	n, sl, slStateAtStart := lookupHelper(k, alpha, targetId)
+
+	// mock of SetupLookUpAlgorithm
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, sl, channels
+	}
+
+	// perform the lookup in go routine
+	var wg sync.WaitGroup
+	wg.Add(1)
+	var res []contact.Contact
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		// wait for response
+		res = n.LookupContact(targetId)
+	}(&wg)
+
+	time.Sleep(time.Millisecond * 100)
+
+	// DESCRIBE: Termination due to closest not updated after an iteration
+
+	// first iteration
+	// the 3 probed contacts respond with one contact each, all are closer than
+	// the original contacts in the shortlist, this should result in 2 of the
+	// original contacts being dropped from the shortlist
+	id1 := kademliaid.FromString("fffffffffffffffffffffffffffffffffff00000")
+	id2 := kademliaid.FromString("ffffffffffffffffffffffffffffffffffff0000")
+	id3 := kademliaid.FromString("fffffffffffffffffffffffffffffffffffff000")
+	resp1 := fmt.Sprintf("%s!%s", id1.String(), addr.String())
+	resp2 := fmt.Sprintf("%s!%s", id2.String(), addr.String())
+	resp3 := fmt.Sprintf("%s!%s", id3.String(), addr.String())
+	channels[0] <- resp1
+	channels[1] <- resp2
+	channels[2] <- resp3
+
+	time.Sleep(time.Millisecond * 100)
+
+	// second iteration
+	// only 1 of the 3 new contacts in the shortlist respond with a contact,
+	// this contact is further away and will not be added to the shortlist
+	// since the lookup did not find a closer contact it will terminate
+	id4 := kademliaid.FromString("f000000000000000000000000000000000000000")
+	resp1 = fmt.Sprintf("%s!%s", id4.String(), addr.String())
+	resp2 = ""
+	resp3 = ""
+	channels[0] <- resp1
+	channels[1] <- resp2
+	channels[2] <- resp3
+
+	time.Sleep(time.Millisecond * 100)
+
+	// should return the k closest contacts (to the targetID) found during the
+	// lookup
+	wg.Wait()
+	assert.NotNil(t, res)
+	expected := []*kademliaid.KademliaID{}
+	// the 3 new contacts and the two closest form the original shortlist should
+	// be the k=5 closest found during the lookup
+	expected = append(expected, id3, id2, id1, slStateAtStart[0].ID, slStateAtStart[1].ID)
+	for i := 0; i < k; i++ {
+		assert.Equal(t, *expected[i], *res[i].ID)
+	}
+}
+
+func TestLookupData(t *testing.T) {
+	addr := address.New("127.0.0.1:1234")
+	targetId := kademliaid.FromString("ffffffffffffffffffffffffffffffffffffffff")
+	alpha := 3
+	k := 5
+	channels := make([]chan string, k)
+
+	n, sl, _ := lookupHelper(k, alpha, targetId)
+
+	// mock of SetupLookUpAlgorithm
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, sl, channels
+	}
+
+	// perform the lookup in go routine
+	var wg sync.WaitGroup
+	wg.Add(1)
+	var res string
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		// wait for response
+		res = n.LookupData(targetId)
+	}(&wg)
+
+	time.Sleep(time.Millisecond * 100)
+
+	// DESCRIBE: Termination due to response containing value
+
+	// first iteration
+	// one of the alpha=3 responses contains the value
+	id1 := kademliaid.FromString("fffffffffffffffffffffffffffffffffff00000")
+	id2 := kademliaid.FromString("ffffffffffffffffffffffffffffffffffff0000")
+	id3 := kademliaid.FromString("fffffffffffffffffffffffffffffffffffff000")
+	resp1 := fmt.Sprintf("%s!%s", id1.String(), addr.String())
+	resp2 := fmt.Sprintf("VALUE=hello world/SENDERID=%s", id2.String())
+	resp3 := fmt.Sprintf("%s!%s", id3.String(), addr.String())
+	channels[0] <- resp1
+	channels[1] <- resp2
+	channels[2] <- resp3
+	wg.Wait()
+
+	// should return the value
+	assert.Equal(t, fmt.Sprintf("hello world, from node: %s", id2.String()), res)
+
+	// DESCRIBE: Termination due to closest not improving during an iteration
+	n, sl, _ = lookupHelper(k, alpha, targetId)
+	channels = make([]chan string, k)
+
+	// mock of SetupLookUpAlgorithm
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, sl, channels
+	}
+
+	wg.Add(1)
+	res = ""
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		// wait for response
+		res = n.LookupData(targetId)
+	}(&wg)
+	time.Sleep(time.Millisecond * 100)
+
+	// first iteration
+	// the 3 probed contacts respond with one contact each, all are closer than
+	// the original contacts in the shortlist, this should result in 2 of the
+	// original contacts being dropped from the shortlist
+	resp1 = fmt.Sprintf("%s!%s", id1.String(), addr.String())
+	resp2 = fmt.Sprintf("%s!%s", id2.String(), addr.String())
+	resp3 = fmt.Sprintf("%s!%s", id3.String(), addr.String())
+	channels[0] <- resp1
+	channels[1] <- resp2
+	channels[2] <- resp3
+	time.Sleep(time.Millisecond * 100)
+
+	// second iteration
+	// only 1 of the 3 new contacts in the shortlist respond with a contact,
+	// this contact is further away and will not improve the closest contact
+	// found but will still be added to the shortlist
+	id4 := kademliaid.FromString("fffffffffffffffffffffffffffffffff0000000")
+	resp1 = fmt.Sprintf("%s!%s", id4.String(), addr.String())
+	resp2 = ""
+	resp3 = ""
+	channels[0] <- resp1
+	channels[1] <- resp2
+	channels[2] <- resp3
+	time.Sleep(time.Millisecond * 100)
+
+	// final round before returning the result (since closest didn't improve)
+	// the only unprobed node in the shortlist responds with the value
+	resp1 = fmt.Sprintf("VALUE=hello world/SENDERID=%s", id4.String())
+	channels[0] <- resp1
+	wg.Wait()
+
+	// should return the value
+	assert.Equal(t, fmt.Sprintf("hello world, from node: %s", id4.String()), res)
+
+	// DESCRIBE: The value is not found
+	//var slStateAtStart []contact.Contact
+	//n, sl, slStateAtStart = lookupContactHelper(3, 3, targetId)
+	n, sl, _ = lookupHelper(3, 3, targetId)
+	channels = make([]chan string, k)
+
+	// mock of SetupLookUpAlgorithm
+	node.SetupLookUpAlgorithm = func(n *node.Node, id *kademliaid.KademliaID) (int, int, *shortlist.Shortlist, []chan string) {
+		return alpha, k, sl, channels
+	}
+
+	wg.Add(1)
+	res = ""
+	go func(wg *sync.WaitGroup) {
+		defer wg.Done()
+		// wait for response
+		res = n.LookupData(targetId)
+	}(&wg)
+	time.Sleep(time.Millisecond * 100)
+
+	// First iteration
+	// the probed contacts return no contacts/value
+	channels[0] <- ""
+	channels[1] <- ""
+	channels[2] <- ""
+	wg.Wait()
+
+	// should return the k-closest contacts found
+	assert.Contains(t, res, "Value not found")
 }
