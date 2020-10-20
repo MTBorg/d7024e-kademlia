@@ -25,7 +25,8 @@ services:
       - ALPHA=3
       - LISTEN_PORT=1776
       - SEND_PORT=1777
-      - BUCKET_REFRESH_TIME=3600
+      - REFRESH_TIME=3500
+      - BUCKET_REFRESH_TIME=3500
       - TTL_TIME=3600
 
 networks:
