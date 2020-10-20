@@ -236,7 +236,7 @@ func GetEnvIntVariable(variable string, defaultValue int) int {
 //
 // TODO: Ignore request after waiting X time
 func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
-	alpha, k, sl, channels := setupLookUpAlgorithm(node, id)
+	alpha, k, sl, channels := SetupLookUpAlgorithm(node, id)
 
 	// Restart refresh timer of the bucket this ID is in range of
 	if *id != *node.ID {
@@ -289,7 +289,7 @@ func NewRPCWithID(senderId *kademliaid.KademliaID, content string, target *addre
 	}
 }
 
-func setupLookUpAlgorithm(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
+func SetupLookUpAlgorithm(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
 	alpha = GetEnvIntVariable("ALPHA", 3)
 	k = GetEnvIntVariable("K", 5)
 	sl = shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
@@ -300,7 +300,7 @@ func setupLookUpAlgorithm(node *Node, id *kademliaid.KademliaID) (alpha int, k i
 }
 
 func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
-	alpha, k, sl, channels := setupLookUpAlgorithm(node, hash)
+	alpha, k, sl, channels := SetupLookUpAlgorithm(node, hash)
 
 	// Restart the refresh timer of the bucket this ID is in range of
 	bucketIndex := node.RoutingTable.GetBucketIndex(hash)
