@@ -63,6 +63,10 @@ func TestParseCmd(t *testing.T) {
 	cmd = cmdparser.ParseCmd("join")
 	assert.NotNil(t, cmd)
 
+	// should be able to parse a forget command
+	cmd = cmdparser.ParseCmd("forget hash")
+	assert.NotNil(t, cmd)
+
 	//should return nil if an invalid command was passed
 	cmd = cmdparser.ParseCmd("non-existent command")
 	assert.Nil(t, cmd)
