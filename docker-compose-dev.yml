@@ -29,6 +29,7 @@ services:
       - SEND_PORT=1777
       - REFRESH_TIME=5
       - TTL_TIME=10
+      - BUCKET_REFRESH_TIME=3600
 
 networks:
   kademlia_dev_network:
