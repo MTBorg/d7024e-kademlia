@@ -87,15 +87,27 @@ func TestInsert(t *testing.T) {
 	time.Sleep(time.Second * 2)
 	senderMock.AssertExpectations(t)
 
-	//should send refresh RPCs if originator
+	// should drop the value when the TTL runs out
 	d = datastore.New()
 	os.Setenv("REFRESH_TIME", "10")
 	os.Setenv("TTL_TIME", "1")
 	contacts = &[]contact.Contact{}
 	d.Insert(value, contacts, nil, nil)
-
 	// Sleep for a bit so that the select case can trigger in the goroutine
 	time.Sleep(time.Second * 2)
+	assert.Equal(t, "", d.Get(hash))
+
+	// should stop refreshing and drop the value if the originator has marked
+	// the value as forgotten
+	d = datastore.New()
+	os.Setenv("REFRESH_TIME", "1")
+	contacts = &[]contact.Contact{}
+	addr := address.New("127.0.0.1:1234")
+	me := contact.NewContact(kademliaid.NewRandomKademliaID(), addr)
+	d.Insert(value, contacts, &me, nil)
+	d.Forget(&hash)
+	assert.Equal(t, value, d.Get(hash))
+	time.Sleep(time.Millisecond * 1100)
 	assert.Equal(t, "", d.Get(hash))
 }
 
