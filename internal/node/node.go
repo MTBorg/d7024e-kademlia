@@ -289,7 +289,14 @@ func NewRPCWithID(senderId *kademliaid.KademliaID, content string, target *addre
 	}
 }
 
-func SetupLookUpAlgorithm(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
+// SetupLookUpAlgorithm returns the needed variables for performing a lookup
+// Returns:
+// k      : the number of closest contacts to search for
+// alpha  : the number of contacts to query during each iteration of the lookup
+// sl     : the shortlist which will contain the alpha closest contacts that the
+//          node itself knows
+// channels : the k channels where any responses will be written to
+var SetupLookUpAlgorithm = func(node *Node, id *kademliaid.KademliaID) (alpha int, k int, sl *shortlist.Shortlist, channels []chan string) {
 	alpha = GetEnvIntVariable("ALPHA", 3)
 	k = GetEnvIntVariable("K", 5)
 	sl = shortlist.NewShortlist(id, node.FindKClosest(id, nil, alpha))
@@ -332,15 +339,19 @@ func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 			if result != "" {
 				return result
 			}
+			// return the k-closest
+			break
 		}
 
 	}
 
 	s := "Value not found, k closest contacts: ["
 	for i, entry := range sl.Entries {
-		s += entry.Contact.String()
-		if i < len(sl.Entries)-1 {
-			s += ", "
+		if entry != nil {
+			s += entry.Contact.String()
+			if i < len(sl.Entries)-1 {
+				s += ", "
+			}
 		}
 	}
 	s += "]"
