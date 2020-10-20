@@ -64,19 +64,25 @@ func TestInsert(t *testing.T) {
 	var contacts *[]contact.Contact
 	value := "hello"
 	hash := kademliaid.NewKademliaID(&value)
+	originatorId := kademliaid.NewRandomKademliaID()
+	originator := contact.NewContact(originatorId, address.New("localhost:3000"))
 
-	//should be able to insert
+	//should be able to insert as non originator
 	d = datastore.New()
 	contacts = &[]contact.Contact{}
 	d.Insert(value, contacts, nil, nil)
 	assert.Equal(t, d.Get(kademliaid.NewKademliaID(&value)), "hello")
 
+	//should be able to insert as originator
+	// d = datastore.New()
+	// contacts = &[]contact.Contact{}
+	// log.Error().Msgf("HEJSAN %s", os.Getenv("REFRESH_TIME"))
+	// d.Insert(value, contacts, &originator, nil)
+	// assert.Equal(t, d.Get(kademliaid.NewKademliaID(&value)), "hello")
+
 	//should send refresh RPCs if originator
 	d = datastore.New()
-	os.Setenv("REFRESH_TIME", "1")
-	originatorId := kademliaid.NewRandomKademliaID()
 	otherContactId := kademliaid.NewRandomKademliaID()
-	originator := contact.NewContact(originatorId, address.New("localhost:3000"))
 	otherContact := contact.NewContact(otherContactId, address.New("localhost:3000"))
 	contacts = &[]contact.Contact{otherContact}
 	var senderMock *SenderMock
@@ -84,7 +90,7 @@ func TestInsert(t *testing.T) {
 	senderMock.On("Send", mock.Anything, otherContact.Address).Return(nil)
 	d.Insert(value, contacts, &originator, senderMock)
 	// Sleep for a bit so that the select case can trigger in the goroutine
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 6) // Sleep for one second more than the default time
 	senderMock.AssertExpectations(t)
 
 	// should drop the value when the TTL runs out
