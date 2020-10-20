@@ -270,6 +270,25 @@ func TestFindKClosest(t *testing.T) {
 }
 
 func TestGetEnvIntVariable(t *testing.T) {
+	// should return the value of the env var if it is set
 	os.Setenv("TEST_VAR", "1337")
 	assert.Equal(t, 1337, node.GetEnvIntVariable("TEST_VAR", 123))
+
+	// should return the default value if the env var is not set
+	assert.Equal(t, 123, node.GetEnvIntVariable("TEST_VAR2", 123))
+}
+
+func TestSetupLookupAlgorithm(t *testing.T) {
+	n := node.Node{}
+	addr := address.New("127.0.0.1:1234")
+	n.Init(addr)
+	c := contact.NewContact(kademliaid.NewRandomKademliaID(), addr)
+	n.RoutingTable.AddContact(c)
+
+	// should return the vars needed in the lookup algo
+	alpha, k, sl, channels := node.SetupLookUpAlgorithm(&n, n.ID)
+	assert.Equal(t, 3, alpha)
+	assert.Equal(t, 5, k)
+	assert.Equal(t, 1, sl.Len())
+	assert.Equal(t, k, len(channels))
 }
