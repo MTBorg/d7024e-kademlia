@@ -25,6 +25,24 @@ func (m *SenderMock) Send(data string, target *address.Address) error {
 	return args.Error(0)
 }
 
+func TestForget(t *testing.T) {
+	d := datastore.New()
+	value := "hello"
+	key := kademliaid.NewKademliaID(&value)
+	contacts := &[]contact.Contact{}
+	d.Insert(value, contacts, nil, nil)
+
+	// should mark the data as forgotten
+	err := d.Forget(&key)
+	assert.Nil(t, err)
+
+	// should return an error when trying to forget a non-existing value
+	value = "byebye"
+	key = kademliaid.NewKademliaID(&value)
+	err = d.Forget(&key)
+	assert.NotNil(t, err)
+}
+
 func TestGet(t *testing.T) {
 	var d datastore.DataStore
 
