@@ -1,6 +1,7 @@
 package rpcpool
 
 import (
+	"kademlia/internal/contact"
 	"kademlia/internal/kademliaid"
 	"sync"
 )
@@ -8,6 +9,7 @@ import (
 type Entry struct {
 	Channel chan string
 	rpcID   *kademliaid.KademliaID
+	Contact *contact.Contact
 }
 
 type RPCPool struct {
@@ -21,8 +23,8 @@ func New() *RPCPool {
 	}
 }
 
-func (pool *RPCPool) Add(rpcID *kademliaid.KademliaID) {
-	pool.entries[*rpcID] = &Entry{rpcID: rpcID, Channel: make(chan string)}
+func (pool *RPCPool) Add(rpcID *kademliaid.KademliaID, contact *contact.Contact) {
+	pool.entries[*rpcID] = &Entry{rpcID: rpcID, Contact: contact, Channel: make(chan string)}
 }
 
 func (pool *RPCPool) GetEntry(rpcId *kademliaid.KademliaID) *Entry {

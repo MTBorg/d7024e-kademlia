@@ -1,6 +1,7 @@
 package findvalueresp_test
 
 import (
+	"kademlia/internal/contact"
 	"kademlia/internal/datastore"
 	"kademlia/internal/kademliaid"
 	"kademlia/internal/node"
@@ -25,7 +26,9 @@ func TestExecute(t *testing.T) {
 	n := node.Node{NodeData: nodedata.NodeData{DataStore: datastore.New(), RPCPool: rpcpool.New()}}
 	senderId := kademliaid.NewRandomKademliaID()
 	rpcID := kademliaid.NewRandomKademliaID()
-	n.RPCPool.Add(rpcID)
+	contact := contact.Contact{ID: senderId}
+
+	n.RPCPool.Add(rpcID, &contact)
 	findRespCmd := findvalueresp.New(senderId, rpcID)
 	var content, data string
 	var channel chan string
