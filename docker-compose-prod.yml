@@ -1,17 +1,17 @@
 version: "3"
 services:
   kademlia:
-    image: kadlab_prod 
+    image: kadlab_prod
     build:
       context: .
       dockerfile: prod.Dockerfile
     deploy:
       mode: replicated
-      replicas: 50  
-#        resources:
-#           limits:
-#              cpus: "0.1"
-#              memory: 50M
+      replicas: 50
+      #        resources:
+      #           limits:
+      #              cpus: "0.1"
+      #              memory: 50M
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -25,6 +25,7 @@ services:
       - ALPHA=3
       - LISTEN_PORT=1776
       - SEND_PORT=1777
-      
+      - BUCKET_REFRESH_TIME=3600
+
 networks:
   kademlia_network:

@@ -2,6 +2,8 @@ package refreshtimer
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -21,10 +23,16 @@ func NewRefreshTimer(bucketIndex int) *RefreshTimer {
 
 func (rt *RefreshTimer) StartRefreshTimer(doRefresh func(int)) {
 	go func() {
+		// get the refresh time (in seconds) from env or default to 1 hour
+		bucketRefreshTime, err := strconv.Atoi(os.Getenv("BUCKET_REFRESH_TIME"))
+		if err != nil {
+			log.Error().Msgf("Failed to convert env variable REFRESH_TIME from string to int: %s", err)
+			bucketRefreshTime = 3600
+		}
 		for {
 			//t := time.Duration(10) * time.Second // 10s
 			//t := time.Minute
-			t := time.Hour
+			t := time.Duration(bucketRefreshTime) * time.Second
 			select {
 			case <-rt.restart:
 				log.Trace().Str("Bucket", fmt.Sprint(rt.bucketIndex)).Msg("Restarted bucket refresh timer")
