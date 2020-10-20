@@ -48,7 +48,14 @@ func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator
 	data.originator = originator != nil
 	d.store[id] = &data
 	data.forgotten = false
-	d.StartRefreshTimer(data, originator, sender) // If successful insert, we start the TTL
+
+	// If this is the node that the data was originally stored at
+	// then we want to refresh rather than delete it
+	if originator != nil {
+		d.StartRefreshTimer(data, originator, sender) // If successful insert, we start the TTL
+	} else {
+		d.StartTTLTimer(data, sender)
+	}
 }
 
 // Gets the value from the store associated with the key.
@@ -108,6 +115,27 @@ func (d *DataStore) EntriesAsString() string {
 	return s
 }
 
+func (d *DataStore) StartTTLTimer(data Data, sender rpc.Sender) {
+	go func() {
+		ttlTime, err := strconv.Atoi(os.Getenv("TTL_TIME"))
+		if err != nil {
+			log.Error().Msgf("Failed to convert env variable TTL_TIME from string to int: %s", err)
+			ttlTime = 10
+		}
+		for {
+			ttlTimer := time.Duration(float64(time.Second) * float64(ttlTime))
+			select {
+			case <-data.restart:
+				log.Trace().Str("Data", data.value).Msg("Restarted data refresh timer")
+			case <-time.After(ttlTimer):
+				log.Trace().Str("Data", data.value).Msg("No refresh done on data, data is silently deleted...")
+				d.Drop(data.value)
+				return
+			}
+		}
+	}()
+}
+
 func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, sender rpc.Sender) {
 	go func() {
 		for {
@@ -117,44 +145,25 @@ func (d *DataStore) StartRefreshTimer(data Data, originator *contact.Contact, se
 				refreshTime = 5
 			}
 			refreshTimer := time.Duration(float64(time.Second) * float64(refreshTime))
-			// t := time.Hour
-			if originator != nil {
-				// If this is the node that the data was originally stored at
-				// then we want to refresh rather than delete it
-				select {
-				case <-time.After(refreshTimer):
-					hash := kademliaid.NewKademliaID(&data.value)
 
-					//If the entry has been marked as forgotten, stop refreshing
-					if d.store[hash].forgotten {
-						log.Trace().
-							Str("Hash", hash.String()).
-							Msg("Entry has been marked as forgotten, deleting entry and stopping refresh")
-						delete(d.store, hash)
-						return
-					}
+			select {
+			case <-time.After(refreshTimer):
+				hash := kademliaid.NewKademliaID(&data.value)
 
-					log.Trace().Str("Hash", hash.String()).Msg("Sending refreshes")
-					for _, contact := range *data.Contacts {
-						refresh := rpc.New(originator.ID,
-							"REFRESH "+hash.String(), contact.Address)
-						refresh.Send(sender, refresh.Target)
-					}
-				}
-			} else {
-				ttlTime, err := strconv.Atoi(os.Getenv("TTL_TIME"))
-				if err != nil {
-					log.Error().Msgf("Failed to convert env variable TTL_TIME from string to int: %s", err)
-					ttlTime = 10
-				}
-				ttlTimer := time.Duration(float64(time.Second) * float64(ttlTime))
-				select {
-				case <-data.restart:
-					log.Trace().Str("Data", data.value).Msg("Restarted data refresh timer")
-				case <-time.After(ttlTimer):
-					log.Trace().Str("Data", data.value).Msg("No refresh done on data, data is silently deleted...")
-					d.Drop(data.value)
+				//If the entry has been marked as forgotten, stop refreshing
+				if d.store[hash].forgotten {
+					log.Trace().
+						Str("Hash", hash.String()).
+						Msg("Entry has been marked as forgotten, deleting entry and stopping refresh")
+					delete(d.store, hash)
 					return
+				}
+
+				log.Trace().Str("Hash", hash.String()).Msg("Sending refreshes")
+				for _, contact := range *data.Contacts {
+					refresh := rpc.New(originator.ID,
+						"REFRESH "+hash.String(), contact.Address)
+					refresh.Send(sender, refresh.Target)
 				}
 			}
 		}
