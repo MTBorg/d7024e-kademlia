@@ -26,6 +26,7 @@ services:
       - LISTEN_PORT=1776
       - SEND_PORT=1777
       - BUCKET_REFRESH_TIME=3600
+      - TTL_TIME=3600
 
 networks:
   kademlia_network:
