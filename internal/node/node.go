@@ -248,10 +248,8 @@ func GetEnvIntVariable(variable string, defaultValue int) int {
 	return val
 }
 
-// LookupContact searches for the contact with the specified key using the node
-// lookup algorithm.
-//
-// TODO: Ignore request after waiting X time
+// LookupContact returns the k-closest contacts to the specified key using the
+// node lookup algorithm.
 func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 	alpha, k, wfrt, sl, channels := SetupLookUpAlgorithm(node, id)
 
@@ -261,7 +259,8 @@ func (node *Node) LookupContact(id *kademliaid.KademliaID) []contact.Contact {
 		node.RefreshTimers[bucketIndex].RestartRefreshTimer()
 	}
 
-	// iterative lookup until the search becomes stale
+	// iterative lookup until the search becomes stale or no improvements of the
+	// closest contact has been made
 	for {
 		closestSoFar := sl.Closest
 
@@ -325,6 +324,9 @@ var SetupLookUpAlgorithm = func(node *Node, id *kademliaid.KademliaID) (alpha in
 	return
 }
 
+// LookupData returns the value associated with the specified hash. If it is
+// not found the k-closest contacts to the specified hash is returned instead.
+// This is done using the node lookup algorithm.
 func (node *Node) LookupData(hash *kademliaid.KademliaID) string {
 	alpha, k, wfrt, sl, channels := SetupLookUpAlgorithm(node, hash)
 
