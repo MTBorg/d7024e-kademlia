@@ -59,8 +59,7 @@ func (d *DataStore) Insert(value string, contacts *[]contact.Contact, originator
 }
 
 // Gets the value from the store associated with the key.
-// Returns an empty string if the key is not found because go is an awful
-// language and should never have been invented.
+// Returns an empty string if the key is not found
 func (d *DataStore) Get(key kademliaid.KademliaID) string {
 	data := d.store[key]
 	if data != nil {
